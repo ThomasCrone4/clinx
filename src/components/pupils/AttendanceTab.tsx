@@ -1,36 +1,39 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import type { Pupil } from '../../types/domain';
 
-export default function AttendanceTab({ pupil }) {
-  // Monthly aggregation
-  const monthlyData = [];
+type AttendanceTabProps = {
+  pupil: Pupil;
+};
+
+export default function AttendanceTab({ pupil }: AttendanceTabProps) {
+  const monthlyData: Array<{ month: string; pupil: number; school: number }> = [];
   const months = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
   const history = pupil.attendanceHistory;
   const chunkSize = Math.floor(history.length / 6);
 
-  for (let i = 0; i < 6; i++) {
-    const chunk = history.slice(i * chunkSize, (i + 1) * chunkSize);
-    const present = chunk.filter(d => d.am === 'Present').length;
+  for (let index = 0; index < 6; index++) {
+    const chunk = history.slice(index * chunkSize, (index + 1) * chunkSize);
+    const present = chunk.filter((day) => day.am === 'Present').length;
     const total = chunk.length || 1;
     monthlyData.push({
-      month: months[i],
+      month: months[index],
       pupil: Math.round((present / total) * 100),
       school: 93 + (Math.random() - 0.5) * 2,
     });
   }
 
-  // Recent records
   const recentRecords = history.slice(-20).reverse();
-
-  // Absence pattern
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const absentByDay = {};
-  history.forEach(r => {
-    if (r.am === 'Absent') {
-      const day = dayNames[new Date(r.date).getDay()];
+  const absentByDay: Record<string, number> = {};
+
+  history.forEach((record) => {
+    if (record.am === 'Absent') {
+      const day = dayNames[new Date(record.date).getDay()];
       absentByDay[day] = (absentByDay[day] || 0) + 1;
     }
   });
-  const totalAbsences = Object.values(absentByDay).reduce((s, v) => s + v, 0);
+
+  const totalAbsences = Object.values(absentByDay).reduce((sum, value) => sum + value, 0);
   const peakDay = Object.entries(absentByDay).sort((a, b) => b[1] - a[1])[0];
 
   return (
@@ -51,16 +54,14 @@ export default function AttendanceTab({ pupil }) {
         </div>
       </div>
 
-      {/* Pattern analysis */}
       {peakDay && totalAbsences > 3 && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
           <p className="text-sm text-amber-800">
-            📊 <strong>Absence pattern detected:</strong> Most absences on {peakDay[0]}s ({peakDay[1]} of {totalAbsences} absences)
+            <strong>Absence pattern detected:</strong> Most absences on {peakDay[0]}s ({peakDay[1]} of {totalAbsences} absences)
           </p>
         </div>
       )}
 
-      {/* Recent records table */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <table className="w-full">
           <thead>
@@ -71,22 +72,34 @@ export default function AttendanceTab({ pupil }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {recentRecords.map((r, i) => (
-              <tr key={i}>
-                <td className="px-4 py-2.5 text-sm text-gray-700">{r.date}</td>
+            {recentRecords.map((record, index) => (
+              <tr key={`${record.date}-${index}`}>
+                <td className="px-4 py-2.5 text-sm text-gray-700">{record.date}</td>
                 <td className="px-4 py-2.5">
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                    r.am === 'Present' ? 'bg-emerald-100 text-emerald-700' :
-                    r.am === 'Late' ? 'bg-amber-100 text-amber-700' :
-                    'bg-red-100 text-red-700'
-                  }`}>{r.am}</span>
+                  <span
+                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      record.am === 'Present'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : record.am === 'Late'
+                          ? 'bg-amber-100 text-amber-700'
+                          : 'bg-red-100 text-red-700'
+                    }`}
+                  >
+                    {record.am}
+                  </span>
                 </td>
                 <td className="px-4 py-2.5">
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                    r.pm === 'Present' ? 'bg-emerald-100 text-emerald-700' :
-                    r.pm === 'Late' ? 'bg-amber-100 text-amber-700' :
-                    'bg-red-100 text-red-700'
-                  }`}>{r.pm}</span>
+                  <span
+                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      record.pm === 'Present'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : record.pm === 'Late'
+                          ? 'bg-amber-100 text-amber-700'
+                          : 'bg-red-100 text-red-700'
+                    }`}
+                  >
+                    {record.pm}
+                  </span>
                 </td>
               </tr>
             ))}

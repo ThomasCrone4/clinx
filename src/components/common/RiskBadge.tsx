@@ -1,3 +1,5 @@
+import type { RiskLevel } from '../../types/domain';
+
 const colors = {
   High: 'bg-red-100 text-red-700 border-red-200',
   Medium: 'bg-amber-100 text-amber-700 border-amber-200',
@@ -10,7 +12,13 @@ const dots = {
   Low: 'bg-emerald-500',
 };
 
-export default function RiskBadge({ level, score, size = 'sm' }) {
+type RiskBadgeProps = {
+  level: RiskLevel;
+  score?: number;
+  size?: 'sm' | 'lg';
+};
+
+export default function RiskBadge({ level, score, size = 'sm' }: RiskBadgeProps) {
   const cls = colors[level] || colors.Low;
   const dot = dots[level] || dots.Low;
   const padding = size === 'lg' ? 'px-3 py-1.5 text-sm' : 'px-2 py-0.5 text-xs';

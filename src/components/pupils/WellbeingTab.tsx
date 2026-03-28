@@ -1,7 +1,12 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { Info } from 'lucide-react';
+import type { Pupil } from '../../types/domain';
 
-export default function WellbeingTab({ pupil }) {
+type WellbeingTabProps = {
+  pupil: Pupil;
+};
+
+export default function WellbeingTab({ pupil }: WellbeingTabProps) {
   const history = pupil.wellbeingHistory.map(w => ({
     ...w,
     yearAvg: 7.2 + (Math.random() - 0.5),

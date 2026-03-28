@@ -1,8 +1,17 @@
 import { NavLink } from 'react-router-dom';
 import { BarChart3, Users, AlertTriangle, UserCog, Settings, CalendarDays, HelpCircle, Building2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import type { LucideIcon } from 'lucide-react';
+import type { UserRole } from '../../types/domain';
 
-const navItems = {
+type NavItem = {
+  to: string;
+  icon: LucideIcon;
+  label: string;
+  end?: boolean;
+};
+
+const navItems: Record<UserRole, NavItem[]> = {
   siteAdmin: [
     { to: '/admin', icon: BarChart3, label: 'Dashboard', end: true },
     { to: '/admin/schools', icon: Building2, label: 'Schools' },

@@ -2,15 +2,20 @@ import { useNavigate } from 'react-router-dom';
 import { getAllAlerts } from '../../services/dataService';
 import RiskBadge from '../common/RiskBadge';
 import { Clock } from 'lucide-react';
+import type { RouteBasePath } from '../../types/domain';
 
-export default function RecentAlerts({ basePath = '/dashboard' }) {
+type RecentAlertsProps = {
+  basePath?: RouteBasePath;
+};
+
+export default function RecentAlerts({ basePath = '/dashboard' }: RecentAlertsProps) {
   const navigate = useNavigate();
   const alerts = getAllAlerts()
     .filter(a => a.status === 'Unread')
     .sort((a, b) => b.riskScore - a.riskScore)
     .slice(0, 10);
 
-  function timeAgo(ts) {
+  function timeAgo(ts: string) {
     const diff = Date.now() - new Date(ts).getTime();
     const hours = Math.floor(diff / 3600000);
     if (hours < 1) return 'Just now';

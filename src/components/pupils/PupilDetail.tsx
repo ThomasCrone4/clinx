@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, AlertTriangle, TrendingDown, TrendingUp, Minus } from 'lucide-react';
+import { ArrowLeft, AlertTriangle } from 'lucide-react';
 import { getPupilById } from '../../services/dataService';
 import RiskBadge from '../common/RiskBadge';
 import PupilOverview from './PupilOverview';
@@ -11,21 +12,24 @@ import WellbeingTab from './WellbeingTab';
 import NotesTab from './NotesTab';
 import SuggestedActions from './SuggestedActions';
 
-const tabs = ['Overview', 'Attendance', 'Behaviour', 'Academic', 'Wellbeing', 'Notes'];
+const tabs = ['Overview', 'Attendance', 'Behaviour', 'Academic', 'Wellbeing', 'Notes'] as const;
+type PupilDetailTab = typeof tabs[number];
 
 export default function PupilDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('Overview');
+  const [activeTab, setActiveTab] = useState<PupilDetailTab>('Overview');
   const pupil = getPupilById(id);
 
-  if (!pupil) return (
-    <div className="flex items-center justify-center h-64">
-      <p className="text-gray-500">Pupil not found</p>
-    </div>
-  );
+  if (!pupil) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-gray-500">Pupil not found</p>
+      </div>
+    );
+  }
 
-  const tabComponents = {
+  const tabComponents: Record<PupilDetailTab, ReactNode> = {
     Overview: <PupilOverview pupil={pupil} />,
     Attendance: <AttendanceTab pupil={pupil} />,
     Behaviour: <BehaviourTab pupil={pupil} />,
@@ -36,7 +40,6 @@ export default function PupilDetail() {
 
   return (
     <div className="max-w-7xl space-y-6">
-      {/* Back button */}
       <button
         onClick={() => navigate(-1)}
         className="flex items-center gap-1 text-sm text-gray-500 hover:text-sky-600 transition-colors"
@@ -44,7 +47,6 @@ export default function PupilDetail() {
         <ArrowLeft className="w-4 h-4" /> Back
       </button>
 
-      {/* Header */}
       <div className="bg-white rounded-xl border border-gray-200 p-6">
         <div className="flex items-start justify-between">
           <div>
@@ -52,7 +54,7 @@ export default function PupilDetail() {
               <h1 className="text-3xl font-bold text-gray-900">{pupil.id}</h1>
               <RiskBadge level={pupil.riskLevel} score={pupil.riskScore} size="lg" />
             </div>
-            <p className="text-gray-600">Year {pupil.year} — Form {pupil.form}</p>
+            <p className="text-gray-600">Year {pupil.year} - Form {pupil.form}</p>
             <div className="flex items-center gap-2 mt-2">
               {pupil.send !== 'None' && (
                 <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full font-medium">{pupil.send}</span>
@@ -66,18 +68,19 @@ export default function PupilDetail() {
         </div>
       </div>
 
-      {/* AI Explanation */}
       {pupil.riskLevel !== 'Low' && (
-        <div className={`rounded-xl border p-5 ${
-          pupil.riskLevel === 'High' ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'
-        }`}>
+        <div
+          className={`rounded-xl border p-5 ${
+            pupil.riskLevel === 'High' ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'
+          }`}
+        >
           <h3 className="flex items-center gap-2 text-sm font-semibold mb-3">
             <AlertTriangle className={`w-4 h-4 ${pupil.riskLevel === 'High' ? 'text-red-600' : 'text-amber-600'}`} />
             Why this pupil was flagged
           </h3>
           <ul className="space-y-2">
-            {pupil.aiExplanation.map((factor, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+            {pupil.aiExplanation.map((factor, index) => (
+              <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
                 <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-gray-400 shrink-0" />
                 <span>
                   {factor.text} {factor.trend && <span className="text-gray-500">{factor.trend}</span>}
@@ -88,18 +91,18 @@ export default function PupilDetail() {
           </ul>
           <div className="mt-3 pt-3 border-t border-gray-200/50">
             <p className="text-xs text-gray-500">
-              Risk breakdown — Attendance: {pupil.riskBreakdown.attendance}/35, Behaviour: {pupil.riskBreakdown.behaviour}/25, Academic: {pupil.riskBreakdown.academic}/20, Wellbeing: {pupil.riskBreakdown.wellbeing}/15, Context: {pupil.riskBreakdown.context}/5 = <strong>{pupil.riskScore}/100</strong>
+              Risk breakdown - Attendance: {pupil.riskBreakdown.attendance}/35, Behaviour: {pupil.riskBreakdown.behaviour}/25,
+              Academic: {pupil.riskBreakdown.academic}/20, Wellbeing: {pupil.riskBreakdown.wellbeing}/15, Context:{' '}
+              {pupil.riskBreakdown.context}/5 = <strong>{pupil.riskScore}/100</strong>
             </p>
           </div>
         </div>
       )}
 
-      {/* Content area with tabs and sidebar */}
       <div className="flex gap-6">
         <div className="flex-1">
-          {/* Tabs */}
           <div className="flex gap-1 bg-white rounded-xl border border-gray-200 p-1 mb-4">
-            {tabs.map(tab => (
+            {tabs.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -115,7 +118,6 @@ export default function PupilDetail() {
           {tabComponents[activeTab]}
         </div>
 
-        {/* Suggested Actions sidebar */}
         {pupil.riskLevel !== 'Low' && <SuggestedActions pupil={pupil} />}
       </div>
     </div>

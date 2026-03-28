@@ -2,11 +2,18 @@ import { useState, useMemo } from 'react';
 import { getAllAlerts, getAlertsForTeacher, acknowledgeAlert, dismissAlert } from '../../services/dataService';
 import { useAuth } from '../../context/AuthContext';
 import AlertCard from './AlertCard';
+import type { AlertStatus, RouteBasePath } from '../../types/domain';
 
-export default function AlertList({ basePath = '/dashboard' }) {
+type AlertListProps = {
+  basePath?: RouteBasePath;
+};
+
+type AlertSortMode = 'risk' | 'newest';
+
+export default function AlertList({ basePath = '/dashboard' }: AlertListProps) {
   const { user } = useAuth();
-  const [filter, setFilter] = useState('Unread');
-  const [sortBy, setSortBy] = useState('risk');
+  const [filter, setFilter] = useState<AlertStatus | 'All'>('Unread');
+  const [sortBy, setSortBy] = useState<AlertSortMode>('risk');
   const [, forceUpdate] = useState(0);
 
   const allAlerts = user?.role === 'teacher'
@@ -21,11 +28,11 @@ export default function AlertList({ basePath = '/dashboard' }) {
     return result;
   }, [allAlerts, filter, sortBy]);
 
-  function handleAcknowledge(id) {
+  function handleAcknowledge(id: string) {
     acknowledgeAlert(id);
     forceUpdate(n => n + 1);
   }
-  function handleDismiss(id) {
+  function handleDismiss(id: string) {
     dismissAlert(id);
     forceUpdate(n => n + 1);
   }

@@ -1,7 +1,20 @@
 import { createContext, useContext, useState } from 'react';
+import type { ReactNode } from 'react';
 import { getTeacherById } from '../services/dataService';
+import type { DemoAccount, UserRole } from '../types/domain';
 
-const AuthContext = createContext(null);
+type LoginResult =
+  | { success: true; role: UserRole }
+  | { success: false; error: string };
+
+type AuthContextValue = {
+  user: DemoAccount | null;
+  login: (email: string, password: string) => LoginResult;
+  logout: () => void;
+  DEMO_ACCOUNTS: DemoAccount[];
+};
+
+const AuthContext = createContext<AuthContextValue | null>(null);
 
 const teacher1 = getTeacherById('T001');
 
@@ -10,12 +23,12 @@ const DEMO_ACCOUNTS = [
   { email: 'head@dedworth.school', password: 'demo', role: 'schoolAdmin', name: 'Mrs. J. Whitfield (Headteacher)', teacherId: null },
   { email: 'dsl@dedworth.school', password: 'demo', role: 'schoolAdmin', name: 'Mr. P. Hargreaves (DSL)', teacherId: null },
   { email: 't.smith@dedworth.school', password: 'demo', role: 'teacher', name: teacher1?.name || 'Mr. T. Smith', teacherId: 'T001' },
-];
+] as DemoAccount[];
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<DemoAccount | null>(null);
 
-  function login(email, password) {
+  function login(email: string, password: string): LoginResult {
     const account = DEMO_ACCOUNTS.find(a => a.email === email && a.password === password);
     if (account) {
       setUser({ ...account });

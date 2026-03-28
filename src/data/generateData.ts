@@ -1,3 +1,20 @@
+import type {
+  Alert,
+  AttendanceRecord,
+  BehaviourIncident,
+  GeneratedData,
+  HomeworkHistory,
+  Period,
+  Pupil,
+  RiskFactor,
+  SchoolClass,
+  SchoolDay,
+  StaffNote,
+  Teacher,
+  TeacherTimetableSlot,
+  WellbeingEntry,
+} from '../types/domain';
+
 // Seeded random for reproducibility
 function mulberry32(a) {
   return function () {
@@ -9,10 +26,10 @@ function mulberry32(a) {
 }
 
 const rand = mulberry32(42);
-const pick = (arr) => arr[Math.floor(rand() * arr.length)];
-const randBetween = (min, max) => min + rand() * (max - min);
-const randInt = (min, max) => Math.floor(randBetween(min, max + 1));
-const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+const pick = <T,>(arr: T[]): T => arr[Math.floor(rand() * arr.length)];
+const randBetween = (min: number, max: number): number => min + rand() * (max - min);
+const randInt = (min: number, max: number): number => Math.floor(randBetween(min, max + 1));
+const clamp = (v: number, min: number, max: number): number => Math.max(min, Math.min(max, v));
 
 // Teacher name pools
 const firstNames = ['James','Robert','John','David','Michael','William','Richard','Thomas','Mark','Paul','Andrew','Peter','Daniel','Stephen','Matthew','Sarah','Emma','Laura','Rachel','Helen','Claire','Rebecca','Karen','Lisa','Anna','Charlotte','Olivia','Sophie','Hannah','Victoria'];
@@ -24,7 +41,7 @@ const yearGroups = [5, 6, 7, 8];
 const forms = ['A', 'B', 'C', 'D'];
 const rooms = ['101','102','103','104','105','201','202','203','204','205','301','302','303','304','305','G01','G02','G03','G04','G05','Hall','Gym','Art Studio','Music Room','IT Suite'];
 
-const periods = [
+const periods: Period[] = [
   { id: 1, label: 'Period 1', start: '09:00', end: '10:00' },
   { id: 2, label: 'Period 2', start: '10:00', end: '11:00' },
   { id: 3, label: 'Period 3', start: '11:20', end: '12:20' },
@@ -33,7 +50,7 @@ const periods = [
   { id: 6, label: 'Period 6', start: '15:00', end: '16:00' },
 ];
 
-const days = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+const days: SchoolDay[] = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
 
 // High-risk archetypes
 const highRiskArchetypes = [
@@ -51,12 +68,12 @@ const highRiskArchetypes = [
   { desc: 'Parental contact issues + attendance concerns', attOverride: [92, 88, 82, 78, 74, 70], parentalIssues: true, wellbeing: 4 },
 ];
 
-function generateTeachers() {
-  const teachers = [];
+function generateTeachers(): Teacher[] {
+  const teachers: Teacher[] = [];
   const usedNames = new Set();
 
   // Assign subjects: first 20 teachers get 1 subject each (2 per subject), next 10 get 1 subject
-  const subjectAssignments = [];
+  const subjectAssignments: string[] = [];
   subjects.forEach(s => { subjectAssignments.push(s); subjectAssignments.push(s); });
   // remaining 10 teachers get random subjects
   for (let i = 0; i < 10; i++) subjectAssignments.push(subjects[i]);
@@ -81,22 +98,28 @@ function generateTeachers() {
       subjects: [subj],
       classes: [],
       formTutor: null,
-      timetable: {},
+      timetable: {
+        Monday: Array(6).fill(null),
+        Tuesday: Array(6).fill(null),
+        Wednesday: Array(6).fill(null),
+        Thursday: Array(6).fill(null),
+        Friday: Array(6).fill(null),
+      },
     });
   }
   return teachers;
 }
 
-function generateClasses(teachers) {
-  const classes = [];
+function generateClasses(teachers: Teacher[]): SchoolClass[] {
+  const classes: SchoolClass[] = [];
   let classId = 1;
 
   // For each form group × subject, create a class
-  const formGroups = [];
+  const formGroups: string[] = [];
   yearGroups.forEach(y => forms.forEach(f => formGroups.push(`${y}${f}`)));
 
   // Get teachers by subject
-  const teachersBySubject = {};
+  const teachersBySubject: Record<string, Teacher[]> = {};
   subjects.forEach(s => { teachersBySubject[s] = teachers.filter(t => t.subjects.includes(s)); });
 
   formGroups.forEach(fg => {
@@ -133,15 +156,20 @@ function generateClasses(teachers) {
   return classes;
 }
 
-function generateTimetable(teachers, classes) {
+function generateTimetable(teachers: Teacher[], classes: SchoolClass[]): void {
   // For each teacher, schedule their classes across the week
   teachers.forEach(teacher => {
     const teacherClasses = classes.filter(c => c.teacherId === teacher.id);
-    const timetable = {};
-    days.forEach(day => { timetable[day] = Array(6).fill(null); });
+    const timetable: Record<SchoolDay, Array<TeacherTimetableSlot | null>> = {
+      Monday: Array(6).fill(null),
+      Tuesday: Array(6).fill(null),
+      Wednesday: Array(6).fill(null),
+      Thursday: Array(6).fill(null),
+      Friday: Array(6).fill(null),
+    };
 
     // Each class meets ~3 times per week
-    const slots = [];
+    const slots: Array<{ day: SchoolDay; period: number }> = [];
     days.forEach(day => periods.forEach((_, pi) => slots.push({ day, period: pi })));
 
     // Shuffle slots
@@ -173,10 +201,10 @@ function generateTimetable(teachers, classes) {
   });
 }
 
-function generatePupils(classes) {
-  const pupils = [];
+function generatePupils(classes: SchoolClass[]): Pupil[] {
+  const pupils: Pupil[] = [];
 
-  const formGroups = [];
+  const formGroups: Array<{ year: number; form: string }> = [];
   yearGroups.forEach(y => forms.forEach(f => formGroups.push({ year: y, form: `${y}${f}` })));
 
   let pupilIdx = 0;
@@ -267,8 +295,8 @@ function generatePupils(classes) {
   return pupils;
 }
 
-function generateAttendanceHistory(currentAtt, trend, archetype) {
-  const history = [];
+function generateAttendanceHistory(currentAtt, trend, archetype): AttendanceRecord[] {
+  const history: AttendanceRecord[] = [];
   const baseDate = new Date('2025-10-01');
   let att = trend === 'Declining' ? currentAtt + 25 : trend === 'Improving' ? currentAtt - 10 : currentAtt;
 
@@ -315,8 +343,8 @@ function generateAttendanceHistory(currentAtt, trend, archetype) {
   return history;
 }
 
-function generateBehaviourHistory(incidents, archetype, pupilId) {
-  const history = [];
+function generateBehaviourHistory(incidents, archetype, pupilId): BehaviourIncident[] {
+  const history: BehaviourIncident[] = [];
   const types = ['Disruption', 'Defiance', 'Aggression', 'Other'];
   const severities = ['Minor', 'Moderate', 'Major'];
   const descriptions = [
@@ -363,8 +391,8 @@ function generateBehaviourHistory(incidents, archetype, pupilId) {
   return history.sort((a, b) => b.date.localeCompare(a.date));
 }
 
-function generateWellbeingHistory(currentScore, archetype) {
-  const history = [];
+function generateWellbeingHistory(currentScore, archetype): WellbeingEntry[] {
+  const history: WellbeingEntry[] = [];
   if (archetype?.wellbeingHistory) {
     archetype.wellbeingHistory.forEach((score, i) => {
       const date = new Date('2025-10-01');
@@ -382,7 +410,7 @@ function generateWellbeingHistory(currentScore, archetype) {
   return history;
 }
 
-function generateHomeworkHistory(currentPct, archetype) {
+function generateHomeworkHistory(currentPct, archetype): HomeworkHistory {
   const history = [];
   const subjects = ['English', 'Maths', 'Science', 'History', 'Geography', 'French', 'Computing', 'Art'];
   if (archetype?.hwHistory) {
@@ -402,8 +430,8 @@ function generateHomeworkHistory(currentPct, archetype) {
   return { monthly: history, subjects: subjectBreakdown };
 }
 
-function generateAIExplanation(id, data) {
-  const factors = [];
+function generateAIExplanation(id, data): RiskFactor[] {
+  const factors: RiskFactor[] = [];
   if (data.attendance < 85) {
     factors.push({
       text: `Attendance at ${data.attendance}% (school average: 93%)`,
@@ -452,8 +480,8 @@ function generateAIExplanation(id, data) {
   return factors;
 }
 
-function generateAlerts(pupils, teachers, classes) {
-  const alerts = [];
+function generateAlerts(pupils: Pupil[], teachers: Teacher[], classes: SchoolClass[]): Alert[] {
+  const alerts: Alert[] = [];
   const highRisk = pupils.filter(p => p.riskLevel === 'High');
   const mediumRisk = pupils.filter(p => p.riskLevel === 'Medium').slice(0, 8);
   const flagged = [...highRisk, ...mediumRisk];
@@ -484,8 +512,8 @@ function generateAlerts(pupils, teachers, classes) {
   return alerts.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 }
 
-function generateStaffNotes(pupils) {
-  const notes = {};
+function generateStaffNotes(pupils: Pupil[]): Record<string, StaffNote[]> {
+  const notes: Record<string, StaffNote[]> = {};
   const noteTemplates = [
     'Spoke with pupil during break. Seemed quiet but engaged when asked about weekend.',
     'Called home — no answer. Will try again tomorrow.',
@@ -522,7 +550,7 @@ function generateStaffNotes(pupils) {
   return notes;
 }
 
-export function generateAllData() {
+export function generateAllData(): GeneratedData {
   const teachers = generateTeachers();
   const classes = generateClasses(teachers);
   generateTimetable(teachers, classes);

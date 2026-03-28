@@ -1,15 +1,21 @@
 import { useState } from 'react';
+import type { FormEvent } from 'react';
 import { MessageSquare, Plus } from 'lucide-react';
 import { getNotesForPupil, addNoteForPupil } from '../../services/dataService';
 import { useAuth } from '../../context/AuthContext';
+import type { Pupil, StaffNote } from '../../types/domain';
 
-export default function NotesTab({ pupil }) {
+type NotesTabProps = {
+  pupil: Pupil;
+};
+
+export default function NotesTab({ pupil }: NotesTabProps) {
   const { user } = useAuth();
-  const [notes, setNotes] = useState(getNotesForPupil(pupil.id));
+  const [notes, setNotes] = useState<StaffNote[]>(getNotesForPupil(pupil.id));
   const [newNote, setNewNote] = useState('');
   const [showForm, setShowForm] = useState(false);
 
-  function handleSubmit(e) {
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!newNote.trim()) return;
     addNoteForPupil(pupil.id, user.name, newNote.trim());
@@ -18,7 +24,7 @@ export default function NotesTab({ pupil }) {
     setShowForm(false);
   }
 
-  function formatDate(ts) {
+  function formatDate(ts: string) {
     const d = new Date(ts);
     return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   }

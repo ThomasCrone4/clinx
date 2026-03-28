@@ -1,16 +1,26 @@
 import { Lightbulb, Info } from 'lucide-react';
+import type { Pupil } from '../../types/domain';
 
-const suggestions = [
-  { condition: (p) => p.attendance < 85, text: 'Review attendance pattern with attendance officer' },
-  { condition: (p) => p.wellbeingScore <= 4, text: 'Schedule a one-to-one check-in with the pupil' },
-  { condition: (p) => p.behaviourIncidents >= 3, text: 'Discuss recent behaviour with Head of Year' },
-  { condition: (p) => p.attendance < 80, text: 'Contact parent/guardian to discuss attendance concerns' },
-  { condition: (p) => p.send !== 'None', text: 'Discuss with SENCO if additional support may be needed' },
-  { condition: (p) => p.homeworkPct < 60, text: 'Review homework expectations and any barriers to completion' },
+type Suggestion = {
+  condition: (pupil: Pupil) => boolean;
+  text: string;
+};
+
+const suggestions: Suggestion[] = [
+  { condition: (pupil) => pupil.attendance < 85, text: 'Review attendance pattern with attendance officer' },
+  { condition: (pupil) => pupil.wellbeingScore <= 4, text: 'Schedule a one-to-one check-in with the pupil' },
+  { condition: (pupil) => pupil.behaviourIncidents >= 3, text: 'Discuss recent behaviour with Head of Year' },
+  { condition: (pupil) => pupil.attendance < 80, text: 'Contact parent/guardian to discuss attendance concerns' },
+  { condition: (pupil) => pupil.send !== 'None', text: 'Discuss with SENCO if additional support may be needed' },
+  { condition: (pupil) => pupil.homeworkPct < 60, text: 'Review homework expectations and any barriers to completion' },
   { condition: () => true, text: 'Consider referral to pastoral team' },
 ];
 
-export default function SuggestedActions({ pupil }) {
+type SuggestedActionsProps = {
+  pupil: Pupil;
+};
+
+export default function SuggestedActions({ pupil }: SuggestedActionsProps) {
   const applicable = suggestions.filter(s => s.condition(pupil)).slice(0, 5);
 
   return (

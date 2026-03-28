@@ -1,13 +1,18 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { AlertCircle } from 'lucide-react';
+import type { BehaviourSeverity, Pupil } from '../../types/domain';
 
-const severityColors = {
+const severityColors: Record<BehaviourSeverity, string> = {
   Minor: 'bg-yellow-100 text-yellow-700',
   Moderate: 'bg-orange-100 text-orange-700',
   Major: 'bg-red-100 text-red-700',
 };
 
-export default function BehaviourTab({ pupil }) {
+type BehaviourTabProps = {
+  pupil: Pupil;
+};
+
+export default function BehaviourTab({ pupil }: BehaviourTabProps) {
   const incidents = pupil.behaviourHistory;
 
   // Monthly aggregation

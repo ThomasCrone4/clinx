@@ -3,20 +3,29 @@ import { useNavigate } from 'react-router-dom';
 import { Search, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { getAllPupils } from '../../services/dataService';
 import RiskBadge from '../common/RiskBadge';
+import type { Pupil, RouteBasePath } from '../../types/domain';
 
-export default function PupilTable({ basePath = '/dashboard', pupils: pupilsProp }) {
+type SortDirection = 'asc' | 'desc';
+type PupilTableSortKey = 'id' | 'year' | 'form' | 'riskLevel' | 'riskScore' | 'attendance' | 'lastUpdated';
+
+type PupilTableProps = {
+  basePath?: RouteBasePath;
+  pupils?: Pupil[];
+};
+
+export default function PupilTable({ basePath = '/dashboard', pupils: pupilsProp }: PupilTableProps) {
   const allPupils = pupilsProp || getAllPupils();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [yearFilter, setYearFilter] = useState('all');
-  const [riskFilter, setRiskFilter] = useState('all');
-  const [sortKey, setSortKey] = useState('riskScore');
-  const [sortDir, setSortDir] = useState('desc');
+  const [riskFilter, setRiskFilter] = useState<Pupil['riskLevel'] | 'all'>('all');
+  const [sortKey, setSortKey] = useState<PupilTableSortKey>('riskScore');
+  const [sortDir, setSortDir] = useState<SortDirection>('desc');
   const [page, setPage] = useState(1);
   const perPage = 50;
 
   const filtered = useMemo(() => {
-    let result = allPupils;
+    let result = [...allPupils];
     if (search) result = result.filter(p => p.id.toLowerCase().includes(search.toLowerCase()));
     if (yearFilter !== 'all') result = result.filter(p => p.year === parseInt(yearFilter));
     if (riskFilter !== 'all') result = result.filter(p => p.riskLevel === riskFilter);
@@ -31,17 +40,17 @@ export default function PupilTable({ basePath = '/dashboard', pupils: pupilsProp
   const totalPages = Math.ceil(filtered.length / perPage);
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
-  function toggleSort(key) {
+  function toggleSort(key: PupilTableSortKey) {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortKey(key); setSortDir('desc'); }
   }
 
-  function SortIcon({ col }) {
+  function SortIcon({ col }: { col: PupilTableSortKey }) {
     if (sortKey !== col) return <ChevronsUpDown className="w-3.5 h-3.5 text-gray-300" />;
     return sortDir === 'asc' ? <ChevronUp className="w-3.5 h-3.5 text-sky-600" /> : <ChevronDown className="w-3.5 h-3.5 text-sky-600" />;
   }
 
-  const columns = [
+  const columns: Array<{ key: PupilTableSortKey; label: string }> = [
     { key: 'id', label: 'Pupil ID' },
     { key: 'year', label: 'Year' },
     { key: 'form', label: 'Form' },

@@ -1,11 +1,19 @@
 import { useNavigate } from 'react-router-dom';
 import { Clock, Eye, Check, X } from 'lucide-react';
 import RiskBadge from '../common/RiskBadge';
+import type { Alert, RouteBasePath } from '../../types/domain';
 
-export default function AlertCard({ alert, onAcknowledge, onDismiss, basePath = '/dashboard' }) {
+type AlertCardProps = {
+  alert: Alert;
+  onAcknowledge: (id: string) => void;
+  onDismiss: (id: string) => void;
+  basePath?: RouteBasePath;
+};
+
+export default function AlertCard({ alert, onAcknowledge, onDismiss, basePath = '/dashboard' }: AlertCardProps) {
   const navigate = useNavigate();
 
-  function timeAgo(ts) {
+  function timeAgo(ts: string) {
     const diff = Date.now() - new Date(ts).getTime();
     const hours = Math.floor(diff / 3600000);
     if (hours < 1) return 'Just now';

@@ -15,8 +15,15 @@ import SchoolsList from './components/admin/SchoolsList';
 import CalendarView from './components/teacher/CalendarView';
 import ClassDetail from './components/teacher/ClassDetail';
 import HelpPage from './components/teacher/HelpPage';
+import type { ReactNode } from 'react';
+import type { UserRole } from './types/domain';
 
-function ProtectedRoute({ children, roles }) {
+type ProtectedRouteProps = {
+  children: ReactNode;
+  roles?: UserRole[];
+};
+
+function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" />;
   if (roles && !roles.includes(user.role)) return <Navigate to="/" />;
@@ -61,7 +68,7 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <AuthProvider>
         <ToastProvider>
           <AppRoutes />

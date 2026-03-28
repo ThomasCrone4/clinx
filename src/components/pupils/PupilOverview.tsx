@@ -1,13 +1,18 @@
 import { TrendingDown, TrendingUp, Minus } from 'lucide-react';
 import { LineChart, Line, ResponsiveContainer } from 'recharts';
+import type { AttendanceTrend, Pupil } from '../../types/domain';
 
-function TrendIcon({ trend }) {
+type PupilOverviewProps = {
+  pupil: Pupil;
+};
+
+function TrendIcon({ trend }: { trend: AttendanceTrend }) {
   if (trend === 'Declining') return <TrendingDown className="w-4 h-4 text-red-500" />;
   if (trend === 'Improving') return <TrendingUp className="w-4 h-4 text-emerald-500" />;
   return <Minus className="w-4 h-4 text-gray-400" />;
 }
 
-function Sparkline({ data, color = '#0284c7' }) {
+function Sparkline({ data, color = '#0284c7' }: { data: Array<{ v: number }>; color?: string }) {
   return (
     <div className="h-8 w-20">
       <ResponsiveContainer width="100%" height="100%">
@@ -19,8 +24,8 @@ function Sparkline({ data, color = '#0284c7' }) {
   );
 }
 
-export default function PupilOverview({ pupil }) {
-  const attSparkline = pupil.attendanceHistory.slice(-30).reduce((acc, r, i) => {
+export default function PupilOverview({ pupil }: PupilOverviewProps) {
+  const attSparkline = pupil.attendanceHistory.slice(-30).reduce<Array<{ v: number }>>((acc, r, i) => {
     if (i % 5 === 0) {
       const chunk = pupil.attendanceHistory.slice(Math.max(0, i - 5), i + 1);
       const present = chunk.filter(d => d.am === 'Present').length;

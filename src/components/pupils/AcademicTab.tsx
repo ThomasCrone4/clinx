@@ -1,7 +1,12 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { TrendingDown, TrendingUp, Minus } from 'lucide-react';
+import type { Pupil } from '../../types/domain';
 
-export default function AcademicTab({ pupil }) {
+type AcademicTabProps = {
+  pupil: Pupil;
+};
+
+export default function AcademicTab({ pupil }: AcademicTabProps) {
   const subjectData = pupil.homeworkHistory.subjects || [];
   const chartData = subjectData.map(s => ({
     subject: s.subject,

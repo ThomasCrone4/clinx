@@ -48,14 +48,14 @@ export default function StaffManagement() {
 
   const initialStaff = useMemo<StaffRow[]>(
     () => [
-      {
-        id: 'staff-headteacher',
-        name: 'Mrs. J. Whitfield',
-        role: 'School Admin',
-        email: 'head@dedworth.school',
-        classes: '-',
-        status: 'Active',
-        source: 'Manual',
+        {
+          id: 'staff-headteacher',
+          name: 'Mr Brad Day',
+          role: 'School Admin',
+          email: 'b.day@dedworth.school',
+          classes: '-',
+          status: 'Active',
+          source: 'Manual',
         clickable: false,
       },
       {

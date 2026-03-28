@@ -20,7 +20,7 @@ const teacher1 = getTeacherById('T001');
 
 const DEMO_ACCOUNTS: DemoAccount[] = [
   { email: 'admin@clinx.uk', password: 'demo', role: 'siteAdmin', name: 'Clinx Admin', teacherId: null },
-  { email: 'head@dedworth.school', password: 'demo', role: 'schoolAdmin', name: 'Mrs. J. Whitfield (Headteacher)', teacherId: null },
+  { email: 'b.day@dedworth.school', password: 'demo', role: 'schoolAdmin', name: 'Mr Brad Day (Assistant Headteacher)', teacherId: null },
   { email: 'dsl@dedworth.school', password: 'demo', role: 'schoolAdmin', name: 'Mr. P. Hargreaves (DSL)', teacherId: null },
   { email: 't.smith@dedworth.school', password: 'demo', role: 'teacher', name: teacher1?.name || 'Mr. T. Smith', teacherId: 'T001' },
 ];

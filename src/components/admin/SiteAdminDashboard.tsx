@@ -106,11 +106,11 @@ export default function SiteAdminDashboard() {
             </div>
             <div className="rounded-lg border border-gray-200 px-3 py-3">
               <p className="font-medium text-gray-900">False positive watch</p>
-              <p className="mt-1">No elevated review flags in the most recent mock governance pass.</p>
+              <p className="mt-1">No elevated review flags in the latest internal governance review.</p>
             </div>
             <div className="rounded-lg border border-gray-200 px-3 py-3">
               <p className="font-medium text-gray-900">Release checks</p>
-              <p className="mt-1">UI, routing, and onboarding flows currently aligned to the CSV-first product model.</p>
+              <p className="mt-1">UI, routing, and onboarding flows are aligned to the current CSV-first product model.</p>
             </div>
           </div>
         </div>
@@ -187,7 +187,7 @@ export default function SiteAdminDashboard() {
             Live Signals
           </h3>
           <p className="text-sm text-gray-600">
-            Current mock platform state suggests stable signal ingestion across Arbor/Class Charts pathways used for live scoring.
+            Current platform state suggests stable signal ingestion across Arbor and Class Charts pathways used for live scoring.
           </p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-5">
@@ -257,7 +257,7 @@ export default function SiteAdminDashboard() {
 
       <div className="rounded-xl border border-sky-200 bg-sky-50 p-5">
         <p className="text-sm font-medium text-sky-900">
-          Platform totals: {schools.length} schools, {totalPupils} pupils, {stats.high} high-risk pupils in the live mock school, and {unreadAlerts.length} unread alerts currently surfaced by the demo platform.
+          Platform totals: {schools.length} schools, {totalPupils} pupils, {stats.high} high-risk pupils in the live school environment, and {unreadAlerts.length} unread alerts currently surfaced across the platform.
         </p>
       </div>
     </div>

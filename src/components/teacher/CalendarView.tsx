@@ -1,12 +1,23 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, AlertTriangle, Brain, BookOpen, ArrowRight, Clock3, CheckCircle2, Eye, ClipboardList } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  AlertTriangle,
+  Brain,
+  BookOpen,
+  ArrowRight,
+  Clock3,
+  CheckCircle2,
+  Eye,
+  ClipboardList,
+} from 'lucide-react';
 import { getTeacherById, getClassById, getPupilsByIds, getPeriods, getDays } from '../../services/dataService';
 import { useAuth } from '../../context/AuthContext';
 import { useAppData } from '../../context/AppDataContext';
 import RiskBadge from '../common/RiskBadge';
 import type { TeacherActionStatus } from '../../types/domain';
-import { getPupilPrimaryLabel, getPupilSecondaryLabel } from '../../utils/pupilDisplay';
+import { getPupilPrimaryLabel } from '../../utils/pupilDisplay';
 
 export default function CalendarView() {
   const { user } = useAuth();
@@ -44,7 +55,8 @@ export default function CalendarView() {
     if (!teacher) return [];
     const seen = new Set<string>();
 
-    return days.flatMap((day) => teacher.timetable[day] || [])
+    return days
+      .flatMap((day) => teacher.timetable[day] || [])
       .filter((slot): slot is NonNullable<typeof slot> => Boolean(slot))
       .filter((slot) => {
         if (seen.has(slot.classId)) return false;
@@ -70,6 +82,7 @@ export default function CalendarView() {
     taughtPupils.length > 0
       ? Math.round((taughtPupils.reduce((sum, pupil) => sum + pupil.attendance, 0) / taughtPupils.length) * 10) / 10
       : 0;
+
   const atRiskClasses = teacherClasses
     .map((schoolClass) => ({
       id: schoolClass.id,
@@ -78,7 +91,7 @@ export default function CalendarView() {
       high: classRiskMap[schoolClass.id]?.high || 0,
       medium: classRiskMap[schoolClass.id]?.medium || 0,
     }))
-    .sort((a, b) => (b.high * 2 + b.medium) - (a.high * 2 + a.medium))
+    .sort((a, b) => b.high * 2 + b.medium - (a.high * 2 + a.medium))
     .slice(0, 3);
 
   const priorityQueue = topPriorityPupils.map((pupil) => ({
@@ -96,23 +109,36 @@ export default function CalendarView() {
 
   const baseDate = new Date('2026-03-23');
   baseDate.setDate(baseDate.getDate() + weekOffset * 7);
-  const weekLabel = `Week of ${baseDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+  const weekLabel = `Week of ${baseDate.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })}`;
 
   return (
     <div className="space-y-4 max-w-7xl">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">My Classes</h1>
-          <p className="text-sm text-gray-500 mt-1">{teacher.name} - {teacher.subjects.join(', ')}</p>
+          <p className="text-sm text-gray-500 mt-1">{teacher.name} · {teacher.subjects.join(', ')}</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setWeekOffset((value) => value - 1)} className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+          <button
+            onClick={() => setWeekOffset((value) => value - 1)}
+            className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <button onClick={() => setWeekOffset(0)} className="px-3 py-2 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50">
+          <button
+            onClick={() => setWeekOffset(0)}
+            className="px-3 py-2 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
             Current Week
           </button>
-          <button onClick={() => setWeekOffset((value) => value + 1)} className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+          <button
+            onClick={() => setWeekOffset((value) => value + 1)}
+            className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
             <ChevronRight className="w-4 h-4" />
           </button>
           <span className="text-sm text-gray-500 ml-2">{weekLabel}</span>
@@ -121,10 +147,34 @@ export default function CalendarView() {
 
       <div className="grid grid-cols-4 gap-4">
         {[
-          { label: 'Pupils Taught', value: taughtPupils.length, icon: BookOpen, tone: 'text-sky-700', bg: 'bg-sky-50 border-sky-200' },
-          { label: 'High Risk Pupils', value: highRiskCount, icon: AlertTriangle, tone: 'text-red-700', bg: 'bg-red-50 border-red-200' },
-          { label: 'Medium Risk Pupils', value: mediumRiskCount, icon: Brain, tone: 'text-amber-700', bg: 'bg-amber-50 border-amber-200' },
-          { label: 'Avg Attendance', value: `${averageAttendance}%`, icon: Clock3, tone: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' },
+          {
+            label: 'Pupils Taught',
+            value: taughtPupils.length,
+            icon: BookOpen,
+            tone: 'text-sky-700',
+            bg: 'bg-sky-50 border-sky-200',
+          },
+          {
+            label: 'High Risk Pupils',
+            value: highRiskCount,
+            icon: AlertTriangle,
+            tone: 'text-red-700',
+            bg: 'bg-red-50 border-red-200',
+          },
+          {
+            label: 'Medium Risk Pupils',
+            value: mediumRiskCount,
+            icon: Brain,
+            tone: 'text-amber-700',
+            bg: 'bg-amber-50 border-amber-200',
+          },
+          {
+            label: 'Avg Attendance',
+            value: `${averageAttendance}%`,
+            icon: Clock3,
+            tone: 'text-emerald-700',
+            bg: 'bg-emerald-50 border-emerald-200',
+          },
         ].map((item) => (
           <div key={item.label} className={`rounded-2xl border p-4 ${item.bg}`}>
             <div className="flex items-center justify-between">
@@ -144,8 +194,9 @@ export default function CalendarView() {
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-100">Teacher Overview</p>
                 <h2 className="text-2xl font-bold mt-2">Who needs attention first?</h2>
                 <p className="text-sm text-sky-50/90 mt-2 max-w-2xl">
-                  Clinx is highlighting pupils across your classes whose current signals most closely resemble past
-                  patterns that led to later concerns, so you can prioritise support without digging through multiple systems.
+                  Clinx is highlighting pupils across your classes whose current signals most closely resemble patterns
+                  that previously led to later concerns, so you can prioritise support without digging through multiple
+                  systems.
                 </p>
               </div>
               <button
@@ -180,7 +231,9 @@ export default function CalendarView() {
                   <tr key={period.id}>
                     <td className="px-4 py-1 text-xs text-gray-400 align-top pt-3">
                       <div className="font-medium">{period.label}</div>
-                      <div>{period.start}-{period.end}</div>
+                      <div>
+                        {period.start}-{period.end}
+                      </div>
                     </td>
                     {days.map((day) => {
                       const slot = teacher.timetable[day]?.[periodIndex];
@@ -274,7 +327,9 @@ export default function CalendarView() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">Action Queue</h2>
-                <p className="text-sm text-gray-500 mt-1">Lightweight next steps for the pupils most likely to need your attention.</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Lightweight next steps for the pupils most likely to need your attention.
+                </p>
               </div>
               <ClipboardList className="w-5 h-5 text-sky-600" />
             </div>
@@ -294,7 +349,9 @@ export default function CalendarView() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-gray-900">{getPupilPrimaryLabel(pupil, user)}</p>
-                      <p className="text-xs text-gray-500 mt-1">{pupil.aiExplanation[0]?.text || 'Pattern shift detected across existing school systems.'}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {pupil.aiExplanation[0]?.text || 'Pattern shift detected across existing school systems.'}
+                      </p>
                     </div>
                     <span
                       className={`text-xs font-medium px-2 py-0.5 rounded-full ${
@@ -316,9 +373,7 @@ export default function CalendarView() {
                         key={option}
                         onClick={() => setTeacherAction(pupil.id, option)}
                         className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                          status === option
-                            ? 'bg-sky-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          status === option ? 'bg-sky-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                       >
                         {option}

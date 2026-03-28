@@ -106,7 +106,7 @@ type AdminDataContextValue = {
 };
 
 const AdminDataContext = createContext<AdminDataContextValue | null>(null);
-const STORAGE_KEY = 'clinx-admin-data-v1';
+const STORAGE_KEY = 'clinx-admin-data-v2';
 
 function buildDedworthAccounts(): SchoolSupportAccount[] {
   const teachers = getAllTeachers();
@@ -114,9 +114,9 @@ function buildDedworthAccounts(): SchoolSupportAccount[] {
   return [
     {
       id: 'support-head',
-      name: 'Mrs. J. Whitfield',
-      role: 'School Admin',
-      email: 'head@dedworth.school',
+      name: 'Mr Brad Day',
+      role: 'Assistant Headteacher',
+      email: 'b.day@dedworth.school',
       classes: '-',
       status: 'Active',
       source: 'Manual',
@@ -222,7 +222,7 @@ function createInitialSchools(): AdminSchool[] {
           { name: 'CPOMS chronology export.csv', status: 'Imported', note: 'Safeguarding chronology labels mapped' },
         ],
         adminUsers: [
-          { name: 'Mrs. J. Whitfield', email: 'head@dedworth.school', role: 'School Admin', status: 'Created' },
+          { name: 'Mr Brad Day', email: 'b.day@dedworth.school', role: 'Assistant Headteacher', status: 'Created' },
           { name: 'Mr. P. Hargreaves', email: 'dsl@dedworth.school', role: 'DSL', status: 'Created' },
         ],
         trackingNotes:

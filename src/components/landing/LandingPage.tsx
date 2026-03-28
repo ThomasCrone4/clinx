@@ -26,7 +26,7 @@ export default function LandingPage() {
     {
       icon: BarChart3,
       title: 'Predicts Future Negative Outcomes',
-      desc: 'Machine learning learns from historical patterns in school data and later recorded outcomes, helping schools spot pupils who may need support earlier.',
+      desc: 'Clinx learns from historical patterns in school data and later recorded outcomes, helping schools spot pupils who may need support earlier.',
     },
     {
       icon: Bell,
@@ -57,6 +57,9 @@ export default function LandingPage() {
         <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-10">
           Clinx learns from past patterns across systems like Arbor, Class Charts, and CPOMS to help schools intervene
           earlier, without asking staff to collect more data or maintain another monitoring system.
+        </p>
+        <p className="text-sm text-gray-400 max-w-xl mx-auto -mt-5 mb-8">
+          Designed to help schools identify who may need support sooner, using data they already hold.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3 mb-10">
           {[
@@ -116,8 +119,8 @@ export default function LandingPage() {
             <p className="text-sm font-semibold text-gray-900">Pattern learning</p>
             <p className="text-sm text-gray-500 mt-2">The model learns which combinations of signals tended to appear before later negative outcomes in historical data.</p>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-6">
-            <p className="text-sm font-semibold text-gray-900">School action</p>
+            <div className="rounded-xl border border-gray-200 bg-white p-6">
+              <p className="text-sm font-semibold text-gray-900">School action</p>
             <p className="text-sm text-gray-500 mt-2">Staff see early warning, likely outcomes, and suggested low-burden next steps without duplicate data entry.</p>
           </div>
         </div>
@@ -242,8 +245,8 @@ export default function LandingPage() {
               </div>
 
               <div className="rounded-lg bg-sky-50 border border-sky-200 p-4 text-sm text-sky-800">
-                Clinx demos can be tailored around your existing data stack, likely onboarding route, and whether you want to
-                see CSV-based historical training, live MIS scoring, or a phased hybrid rollout.
+                We can tailor the demo around your current systems, your likely onboarding route, and whether you want to
+                see historical training, live MIS scoring, or a phased hybrid rollout.
               </div>
 
               <div className="flex justify-end gap-2">

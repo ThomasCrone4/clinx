@@ -1,14 +1,28 @@
 import type {
   Alert,
+  AttendanceTrend,
   AttendanceRecord,
+  ArborApiSnapshot,
+  ArborAttendanceRecord,
+  ArborStudentRecord,
+  BehaviourSeverity,
   BehaviourIncident,
+  ClassChartsApiSnapshot,
+  ClassChartsBehaviourRecord,
+  ClassChartsHomeworkRecord,
+  CpomsApiSnapshot,
+  CpomsConcernRecord,
   GeneratedData,
   HomeworkHistory,
+  HomeworkTrend,
+  ExternalSourceSnapshots,
   Period,
   Pupil,
   RiskFactor,
+  RiskLevel,
   SchoolClass,
   SchoolDay,
+  SendStatus,
   StaffNote,
   Teacher,
   TeacherTimetableSlot,
@@ -52,6 +66,25 @@ const periods: Period[] = [
 
 const days: SchoolDay[] = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
 
+const formRiskPlan: Record<string, { high: number; medium: number }> = {
+  '5A': { high: 1, medium: 2 },
+  '5B': { high: 0, medium: 2 },
+  '5C': { high: 1, medium: 1 },
+  '5D': { high: 0, medium: 2 },
+  '6A': { high: 1, medium: 2 },
+  '6B': { high: 0, medium: 3 },
+  '6C': { high: 1, medium: 2 },
+  '6D': { high: 0, medium: 2 },
+  '7A': { high: 1, medium: 2 },
+  '7B': { high: 1, medium: 3 },
+  '7C': { high: 0, medium: 2 },
+  '7D': { high: 1, medium: 2 },
+  '8A': { high: 1, medium: 2 },
+  '8B': { high: 0, medium: 2 },
+  '8C': { high: 1, medium: 3 },
+  '8D': { high: 0, medium: 2 },
+};
+
 // High-risk archetypes
 const highRiskArchetypes = [
   { desc: 'Attendance nosedive + homework decline', attOverride: [96, 90, 84, 76, 72, 68], hwOverride: 38, behav: 1, wellbeing: 4 },
@@ -67,6 +100,26 @@ const highRiskArchetypes = [
   { desc: 'Persistent low-level disruption escalating', behavOverride: 8, behavHistory: [1, 1, 2, 3, 5, 8], wellbeing: 5 },
   { desc: 'Parental contact issues + attendance concerns', attOverride: [92, 88, 82, 78, 74, 70], parentalIssues: true, wellbeing: 4 },
 ];
+
+function getPupilIdentity(pupil: Pupil) {
+  const numericId = Number.parseInt(pupil.id.replace(/\D/g, ''), 10);
+  const firstName = firstNames[numericId % firstNames.length];
+  const lastName = surnames[(numericId * 3) % surnames.length];
+  const preferredFirstName = numericId % 9 === 0 ? firstName.slice(0, Math.max(3, firstName.length - 1)) : firstName;
+  const dobYear = 2010 + ((numericId + pupil.year) % 4);
+  const dobMonth = String((numericId % 12) + 1).padStart(2, '0');
+  const dobDay = String(((numericId * 2) % 28) + 1).padStart(2, '0');
+
+  return {
+    firstName,
+    lastName,
+    preferredFirstName,
+    fullName: `${preferredFirstName} ${lastName}`,
+    dateOfBirth: `${dobYear}-${dobMonth}-${dobDay}`,
+    upn: `A${String(100000000000 + numericId).slice(0, 12)}`,
+    studentNumber: `ARB-${String(numericId).padStart(6, '0')}`,
+  };
+}
 
 function generateTeachers(): Teacher[] {
   const teachers: Teacher[] = [];
@@ -208,27 +261,39 @@ function generatePupils(classes: SchoolClass[]): Pupil[] {
   yearGroups.forEach(y => forms.forEach(f => formGroups.push({ year: y, form: `${y}${f}` })));
 
   let pupilIdx = 0;
+  let highRiskAssigned = 0;
   formGroups.forEach(({ year, form }) => {
     const count = year === 5 ? 31 : year === 6 ? 31 : year === 7 ? 32 : 31; // ~125 per year
     const adjustedCount = pupilIdx + count > 500 ? 500 - pupilIdx : count;
+    const riskPlan = formRiskPlan[form] || { high: 0, medium: 1 };
+    const positionPool = Array.from({ length: adjustedCount }, (_, index) => index);
+
+    for (let i = positionPool.length - 1; i > 0; i--) {
+      const j = Math.floor(rand() * (i + 1));
+      [positionPool[i], positionPool[j]] = [positionPool[j], positionPool[i]];
+    }
+
+    const highRiskPositions = new Set(positionPool.slice(0, riskPlan.high));
+    const mediumRiskPositions = new Set(positionPool.slice(riskPlan.high, riskPlan.high + riskPlan.medium));
 
     for (let i = 0; i < adjustedCount; i++) {
       pupilIdx++;
       const id = `C${String(pupilIdx).padStart(4, '0')}`;
-      const isHighRisk = pupilIdx <= 12;
-      const isMediumRisk = pupilIdx > 12 && pupilIdx <= 40;
+      const isHighRisk = highRiskPositions.has(i);
+      const isMediumRisk = !isHighRisk && mediumRiskPositions.has(i);
 
       let attendance = isHighRisk ? randBetween(55, 78) : isMediumRisk ? randBetween(72, 88) : randBetween(88, 100);
       let behaviourIncidents = isHighRisk ? randInt(3, 8) : isMediumRisk ? randInt(1, 4) : randInt(0, 1);
       let homeworkPct = isHighRisk ? randBetween(25, 55) : isMediumRisk ? randBetween(55, 78) : randBetween(78, 100);
       let wellbeingScore = isHighRisk ? randInt(2, 5) : isMediumRisk ? randInt(4, 6) : randInt(6, 10);
       let fsm = rand() < 0.15;
-      let send = rand() < 0.03 ? 'EHCP' : rand() < 0.15 ? 'SEN Support' : 'None';
+      let send: SendStatus = rand() < 0.03 ? 'EHCP' : rand() < 0.15 ? 'SEN Support' : 'None';
 
       // Apply high-risk archetypes
       let archetype = null;
       if (isHighRisk) {
-        archetype = highRiskArchetypes[pupilIdx - 1];
+        archetype = highRiskArchetypes[highRiskAssigned % highRiskArchetypes.length];
+        highRiskAssigned++;
         if (archetype.fsmOverride) fsm = true;
         if (archetype.sendOverride) send = archetype.sendOverride;
         if (archetype.behavOverride !== undefined) behaviourIncidents = archetype.behavOverride;
@@ -253,8 +318,8 @@ function generatePupils(classes: SchoolClass[]): Pupil[] {
       if (isMediumRisk && riskScore < 50) riskScore = randInt(50, 74);
       if (!isHighRisk && !isMediumRisk && riskScore > 49) riskScore = randInt(10, 45);
 
-      const riskLevel = riskScore > 75 ? 'High' : riskScore >= 50 ? 'Medium' : 'Low';
-      const attendanceTrend = isHighRisk ? 'Declining' : isMediumRisk ? (rand() > 0.5 ? 'Declining' : 'Stable') : (rand() > 0.8 ? 'Improving' : 'Stable');
+      const riskLevel: RiskLevel = riskScore > 75 ? 'High' : riskScore >= 50 ? 'Medium' : 'Low';
+      const attendanceTrend: AttendanceTrend = isHighRisk ? 'Declining' : isMediumRisk ? (rand() > 0.5 ? 'Declining' : 'Stable') : (rand() > 0.8 ? 'Improving' : 'Stable');
 
       // Assign to classes
       const formClasses = classes.filter(c => c.form === form);
@@ -346,7 +411,7 @@ function generateAttendanceHistory(currentAtt, trend, archetype): AttendanceReco
 function generateBehaviourHistory(incidents, archetype, pupilId): BehaviourIncident[] {
   const history: BehaviourIncident[] = [];
   const types = ['Disruption', 'Defiance', 'Aggression', 'Other'];
-  const severities = ['Minor', 'Moderate', 'Major'];
+  const severities: BehaviourSeverity[] = ['Minor', 'Moderate', 'Major'];
   const descriptions = [
     'Talking over teacher during lesson',
     'Refused to follow instructions',
@@ -368,7 +433,7 @@ function generateBehaviourHistory(incidents, archetype, pupilId): BehaviourIncid
         history.push({
           date: date.toISOString().split('T')[0],
           type: pick(types),
-          severity: count > 4 ? pick(['Moderate', 'Major']) : pick(severities),
+          severity: count > 4 ? pick<BehaviourSeverity>(['Moderate', 'Major']) : pick(severities),
           description: pick(descriptions),
           loggedBy: `Staff Member`,
         });
@@ -411,7 +476,7 @@ function generateWellbeingHistory(currentScore, archetype): WellbeingEntry[] {
 }
 
 function generateHomeworkHistory(currentPct, archetype): HomeworkHistory {
-  const history = [];
+  const history: HomeworkHistory['monthly'] = [];
   const subjects = ['English', 'Maths', 'Science', 'History', 'Geography', 'French', 'Computing', 'Art'];
   if (archetype?.hwHistory) {
     archetype.hwHistory.forEach((pct, i) => {
@@ -421,10 +486,10 @@ function generateHomeworkHistory(currentPct, archetype): HomeworkHistory {
     });
   }
   // Per-subject breakdown
-  const subjectBreakdown = subjects.map(s => ({
+  const subjectBreakdown = subjects.map((s): HomeworkHistory['subjects'][number] => ({
     subject: s,
     pct: clamp(Math.round(currentPct + (rand() - 0.5) * 20), 0, 100),
-    trend: rand() > 0.6 ? 'Declining' : rand() > 0.3 ? 'Stable' : 'Improving',
+    trend: (rand() > 0.6 ? 'Declining' : rand() > 0.3 ? 'Stable' : 'Improving') as HomeworkTrend,
     lastSubmission: '2026-03-' + String(randInt(20, 27)).padStart(2, '0'),
   }));
   return { monthly: history, subjects: subjectBreakdown };
@@ -450,7 +515,7 @@ function generateAIExplanation(id, data): RiskFactor[] {
     factors.push({
       text: `Homework submission rate at ${data.homeworkPct}%`,
       trend: '(below 70% threshold)',
-      source: 'Google Classroom',
+      source: 'Class Charts Homework',
     });
   }
   if (data.wellbeingScore <= 4) {
@@ -550,6 +615,170 @@ function generateStaffNotes(pupils: Pupil[]): Record<string, StaffNote[]> {
   return notes;
 }
 
+function generateArborSnapshot(pupils: Pupil[]): ArborApiSnapshot {
+  const students: ArborStudentRecord[] = pupils.map((pupil) => {
+    const identity = getPupilIdentity(pupil);
+    return {
+      student_id: pupil.id,
+      student_number: identity.studentNumber,
+      upn: identity.upn,
+      legal_first_name: identity.firstName,
+      legal_last_name: identity.lastName,
+      preferred_first_name: identity.preferredFirstName,
+      date_of_birth: identity.dateOfBirth,
+      year_group: pupil.year,
+      registration_form: pupil.form,
+      pupil_premium_eligible: pupil.fsm,
+      sen_status: pupil.send,
+      enrolment_status: 'Current',
+      school_name: 'Dedworth Middle School',
+      last_synced_at: pupil.lastUpdated,
+    };
+  });
+
+  const attendance_marks: ArborAttendanceRecord[] = pupils.flatMap((pupil) =>
+    pupil.attendanceHistory.flatMap((record) => [
+      {
+        student_id: pupil.id,
+        date: record.date,
+        session: 'AM' as const,
+        mark_code: record.am === 'Present' ? '/' : record.am === 'Late' ? 'L' : 'N',
+        mark_meaning: record.am,
+        attendance_value: record.am,
+        school_name: 'Dedworth Middle School',
+        source_system: 'arbor' as const,
+      },
+      {
+        student_id: pupil.id,
+        date: record.date,
+        session: 'PM' as const,
+        mark_code: record.pm === 'Present' ? '\\' : record.pm === 'Late' ? 'L' : 'N',
+        mark_meaning: record.pm,
+        attendance_value: record.pm,
+        school_name: 'Dedworth Middle School',
+        source_system: 'arbor' as const,
+      },
+    ]),
+  );
+
+  return { students, attendance_marks };
+}
+
+function generateClassChartsSnapshot(pupils: Pupil[], teachers: Teacher[], classes: SchoolClass[]): ClassChartsApiSnapshot {
+  const behaviour_events: ClassChartsBehaviourRecord[] = pupils.flatMap((pupil) => {
+    const identity = getPupilIdentity(pupil);
+    return pupil.behaviourHistory.map((incident, index) => {
+      const matchingClass = classes.find((schoolClass) => pupil.classIds.includes(schoolClass.id)) || classes[0];
+      return {
+        behaviour_id: `CC-B-${pupil.id}-${String(index + 1).padStart(3, '0')}`,
+        pupil_id: pupil.id,
+        pupil_name: identity.fullName,
+        class_id: matchingClass.id,
+        class_name: matchingClass.name,
+        teacher_id: matchingClass.teacherId,
+        teacher_name: matchingClass.teacherName,
+        activity_type: incident.type,
+        severity: incident.severity,
+        points: incident.severity === 'Major' ? -4 : incident.severity === 'Moderate' ? -2 : -1,
+        comment: incident.description,
+        logged_at: `${incident.date}T14:${String((index * 7) % 60).padStart(2, '0')}:00Z`,
+        source_system: 'classCharts',
+      };
+    });
+  });
+
+  const homework_feed: ClassChartsHomeworkRecord[] = pupils.flatMap((pupil) => {
+    const identity = getPupilIdentity(pupil);
+    return pupil.homeworkHistory.subjects.map((subjectEntry, index) => {
+      const matchingClass =
+        classes.find((schoolClass) => schoolClass.subject === subjectEntry.subject && pupil.classIds.includes(schoolClass.id)) ||
+        classes.find((schoolClass) => pupil.classIds.includes(schoolClass.id)) ||
+        classes[0];
+
+      const isMissing = subjectEntry.pct < 50;
+      const isLate = !isMissing && subjectEntry.pct < 75;
+      return {
+        homework_id: `CC-H-${pupil.id}-${String(index + 1).padStart(3, '0')}`,
+        pupil_id: pupil.id,
+        pupil_name: identity.fullName,
+        subject: subjectEntry.subject,
+        teacher_id: matchingClass.teacherId,
+        teacher_name: matchingClass.teacherName,
+        class_id: matchingClass.id,
+        title: `${subjectEntry.subject} Retrieval Task ${index + 1}`,
+        assigned_date: `2026-03-${String(Math.max(1, index + 3)).padStart(2, '0')}`,
+        due_date: `2026-03-${String(Math.max(3, index + 10)).padStart(2, '0')}`,
+        submitted_at: isMissing ? null : `${subjectEntry.lastSubmission}T17:15:00Z`,
+        submission_status: isMissing ? 'Missing' : isLate ? 'Late' : 'Submitted',
+        grade_percent: isMissing ? null : subjectEntry.pct,
+        source_system: 'classCharts',
+      };
+    });
+  });
+
+  return { behaviour_events, homework_feed };
+}
+
+function generateCpomsSnapshot(
+  pupils: Pupil[],
+  staffNotes: Record<string, StaffNote[]>,
+  alerts: Alert[],
+  teachers: Teacher[],
+): CpomsApiSnapshot {
+  const defaultAssignee = teachers[0]?.name || 'Pastoral Lead';
+  const concerns: CpomsConcernRecord[] = pupils
+    .filter((pupil) => pupil.riskLevel !== 'Low' || (staffNotes[pupil.id] || []).length > 0)
+    .flatMap((pupil, index) => {
+      const identity = getPupilIdentity(pupil);
+      const notes = staffNotes[pupil.id] || [];
+      const linkedAlert = alerts.find((alert) => alert.pupilId === pupil.id) || null;
+      const category: CpomsConcernRecord['category'] =
+        pupil.wellbeingScore <= 4
+          ? 'Wellbeing'
+          : pupil.attendance < 85
+            ? 'Attendance'
+            : pupil.behaviourIncidents >= 3
+              ? 'Behaviour'
+              : 'Pastoral';
+
+      return [
+        {
+          concern_id: `CPOMS-${String(index + 1).padStart(4, '0')}`,
+          pupil_id: pupil.id,
+          pupil_name: identity.fullName,
+          category,
+          status: linkedAlert?.status === 'Dismissed' ? 'Closed' : linkedAlert?.status === 'Acknowledged' ? 'Monitoring' : 'Open',
+          priority: pupil.riskLevel,
+          reported_by: notes[0]?.author || defaultAssignee,
+          assigned_to: linkedAlert?.assignedTeachers[0] || defaultAssignee,
+          incident_date: notes[0]?.timestamp?.slice(0, 10) || pupil.lastUpdated.slice(0, 10),
+          created_at: notes[0]?.timestamp || pupil.lastUpdated,
+          chronology_note:
+            notes[0]?.text ||
+            `Automated concern created from aggregated signals: attendance ${pupil.attendance}%, behaviour ${pupil.behaviourIncidents}, wellbeing ${pupil.wellbeingScore}/10.`,
+          linked_alert_id: linkedAlert?.id || null,
+          source_system: 'cpoms',
+        },
+      ];
+    });
+
+  return { concerns };
+}
+
+function generateExternalSourceSnapshots(
+  pupils: Pupil[],
+  teachers: Teacher[],
+  classes: SchoolClass[],
+  alerts: Alert[],
+  staffNotes: Record<string, StaffNote[]>,
+): ExternalSourceSnapshots {
+  return {
+    arbor: generateArborSnapshot(pupils),
+    classCharts: generateClassChartsSnapshot(pupils, teachers, classes),
+    cpoms: generateCpomsSnapshot(pupils, staffNotes, alerts, teachers),
+  };
+}
+
 export function generateAllData(): GeneratedData {
   const teachers = generateTeachers();
   const classes = generateClasses(teachers);
@@ -557,6 +786,7 @@ export function generateAllData(): GeneratedData {
   const pupils = generatePupils(classes);
   const alerts = generateAlerts(pupils, teachers, classes);
   const staffNotes = generateStaffNotes(pupils);
+  const sourceData = generateExternalSourceSnapshots(pupils, teachers, classes, alerts, staffNotes);
 
-  return { teachers, classes, pupils, alerts, staffNotes, periods, days };
+  return { teachers, classes, pupils, alerts, staffNotes, periods, days, sourceData };
 }

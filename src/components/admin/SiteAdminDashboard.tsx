@@ -1,10 +1,12 @@
-import { Building2, Users, BarChart3, AlertTriangle } from 'lucide-react';
-import { getPupilStats, getAllAlerts } from '../../services/dataService';
+import { Building2, Users, BarChart3, AlertTriangle, Plus, Cable, Brain } from 'lucide-react';
+import { getPupilStats } from '../../services/dataService';
+import { useAppData } from '../../context/AppDataContext';
 import { useNavigate } from 'react-router-dom';
 
 export default function SiteAdminDashboard() {
   const stats = getPupilStats();
-  const alerts = getAllAlerts().filter(a => a.status === 'Unread');
+  const { unreadAlerts } = useAppData();
+  const alerts = unreadAlerts;
   const navigate = useNavigate();
 
   return (
@@ -12,6 +14,19 @@ export default function SiteAdminDashboard() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Site Administration</h1>
         <p className="text-sm text-gray-500 mt-1">Clinx platform overview</p>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-200 p-5 flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">School Onboarding</h2>
+          <p className="text-sm text-gray-500 mt-1">Add new schools, choose integration pathways, and configure historical model training.</p>
+        </div>
+        <button
+          onClick={() => navigate('/admin/onboarding')}
+          className="flex items-center gap-1.5 px-4 py-2 bg-sky-600 text-white text-sm rounded-lg font-medium hover:bg-sky-700 transition-colors"
+        >
+          <Plus className="w-4 h-4" /> New School
+        </button>
       </div>
 
       {/* System stats */}
@@ -32,10 +47,43 @@ export default function SiteAdminDashboard() {
         ))}
       </div>
 
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Cable className="w-4 h-4 text-sky-600" />
+            <h3 className="text-sm font-semibold text-gray-700">Integration Pipeline</h3>
+          </div>
+          <p className="text-2xl font-bold text-gray-900">2 schools</p>
+          <p className="text-sm text-gray-500 mt-1">One live school and one school currently in technical discovery.</p>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Brain className="w-4 h-4 text-violet-600" />
+            <h3 className="text-sm font-semibold text-gray-700">Training Readiness</h3>
+          </div>
+          <p className="text-2xl font-bold text-gray-900">CSV + API</p>
+          <p className="text-sm text-gray-500 mt-1">Historical backfill and live data feeds are both supported in the mock onboarding journey.</p>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Building2 className="w-4 h-4 text-emerald-600" />
+            <h3 className="text-sm font-semibold text-gray-700">Default Rollout</h3>
+          </div>
+          <p className="text-2xl font-bold text-gray-900">Hybrid</p>
+          <p className="text-sm text-gray-500 mt-1">Use existing school systems, backfill historical data, then switch to live integrations.</p>
+        </div>
+      </div>
+
       {/* Schools table */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
           <h3 className="text-sm font-semibold text-gray-700">Schools</h3>
+          <button
+            onClick={() => navigate('/admin/onboarding')}
+            className="text-sm font-medium text-sky-700 hover:text-sky-800"
+          >
+            Manage Onboarding
+          </button>
         </div>
         <table className="w-full">
           <thead>

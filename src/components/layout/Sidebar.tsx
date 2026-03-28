@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { BarChart3, Users, AlertTriangle, UserCog, Settings, CalendarDays, HelpCircle, Building2 } from 'lucide-react';
+import { BarChart3, Users, AlertTriangle, UserCog, Settings, CalendarDays, HelpCircle, Building2, Database, Workflow } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import type { LucideIcon } from 'lucide-react';
 import type { UserRole } from '../../types/domain';
@@ -15,12 +15,14 @@ const navItems: Record<UserRole, NavItem[]> = {
   siteAdmin: [
     { to: '/admin', icon: BarChart3, label: 'Dashboard', end: true },
     { to: '/admin/schools', icon: Building2, label: 'Schools' },
+    { to: '/admin/onboarding', icon: Workflow, label: 'Onboarding' },
   ],
   schoolAdmin: [
     { to: '/dashboard', icon: BarChart3, label: 'Dashboard', end: true },
     { to: '/dashboard/pupils', icon: Users, label: 'All Pupils' },
     { to: '/dashboard/alerts', icon: AlertTriangle, label: 'Alerts' },
     { to: '/dashboard/staff', icon: UserCog, label: 'Staff' },
+    { to: '/dashboard/data-sources', icon: Database, label: 'Data Sources' },
     { to: '/dashboard/settings', icon: Settings, label: 'Settings' },
   ],
   teacher: [

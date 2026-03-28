@@ -11,6 +11,9 @@ import AcademicTab from './AcademicTab';
 import WellbeingTab from './WellbeingTab';
 import NotesTab from './NotesTab';
 import SuggestedActions from './SuggestedActions';
+import ConcernWorkflowPanel from './ConcernWorkflowPanel';
+import SignalConfidencePanel from './SignalConfidencePanel';
+import PredictedOutcomesPanel from './PredictedOutcomesPanel';
 
 const tabs = ['Overview', 'Attendance', 'Behaviour', 'Academic', 'Wellbeing', 'Notes'] as const;
 type PupilDetailTab = typeof tabs[number];
@@ -99,6 +102,11 @@ export default function PupilDetail() {
         </div>
       )}
 
+      <div className="grid grid-cols-2 gap-6">
+        <PredictedOutcomesPanel pupil={pupil} />
+        <SignalConfidencePanel pupil={pupil} />
+      </div>
+
       <div className="flex gap-6">
         <div className="flex-1">
           <div className="flex gap-1 bg-white rounded-xl border border-gray-200 p-1 mb-4">
@@ -118,7 +126,12 @@ export default function PupilDetail() {
           {tabComponents[activeTab]}
         </div>
 
-        {pupil.riskLevel !== 'Low' && <SuggestedActions pupil={pupil} />}
+        {pupil.riskLevel !== 'Low' && (
+          <div className="w-72 shrink-0 space-y-4">
+            <SuggestedActions pupil={pupil} />
+            <ConcernWorkflowPanel pupil={pupil} />
+          </div>
+        )}
       </div>
     </div>
   );

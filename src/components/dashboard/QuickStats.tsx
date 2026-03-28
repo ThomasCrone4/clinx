@@ -1,15 +1,18 @@
-import { Users, TrendingUp, AlertTriangle, BookOpen } from 'lucide-react';
-import { getPupilStats, getAllAlerts } from '../../services/dataService';
+import { Users, TrendingUp, AlertTriangle, Brain } from 'lucide-react';
+import { getPupilStats } from '../../services/dataService';
+import { useAppData } from '../../context/AppDataContext';
 
 export default function QuickStats() {
   const stats = getPupilStats();
-  const activeAlerts = getAllAlerts().filter(a => a.status === 'Unread').length;
+  const { unreadAlerts } = useAppData();
+  const activeAlerts = unreadAlerts.length;
+  const pupilsNeedingReview = stats.high + stats.medium;
 
   const items = [
     { label: 'Total Pupils', value: stats.total, icon: Users, color: 'text-sky-600' },
     { label: 'Avg Attendance', value: `${stats.avgAttendance}%`, icon: TrendingUp, color: 'text-emerald-600' },
-    { label: 'Active Alerts', value: activeAlerts, icon: AlertTriangle, color: 'text-amber-600' },
-    { label: 'Year Groups', value: '4', icon: BookOpen, color: 'text-purple-600' },
+    { label: 'Predicted Early Alerts', value: activeAlerts, icon: AlertTriangle, color: 'text-amber-600' },
+    { label: 'Pupils Needing Review', value: pupilsNeedingReview, icon: Brain, color: 'text-violet-600' },
   ];
 
   return (

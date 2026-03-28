@@ -31,7 +31,7 @@ export default function PupilTable({ basePath = '/dashboard', pupils: pupilsProp
     if (riskFilter !== 'all') result = result.filter(p => p.riskLevel === riskFilter);
     result.sort((a, b) => {
       const av = a[sortKey], bv = b[sortKey];
-      if (typeof av === 'number') return sortDir === 'asc' ? av - bv : bv - av;
+      if (typeof av === 'number' && typeof bv === 'number') return sortDir === 'asc' ? av - bv : bv - av;
       return sortDir === 'asc' ? String(av).localeCompare(String(bv)) : String(bv).localeCompare(String(av));
     });
     return result;
@@ -89,7 +89,7 @@ export default function PupilTable({ basePath = '/dashboard', pupils: pupilsProp
         </select>
         <select
           value={riskFilter}
-          onChange={e => { setRiskFilter(e.target.value); setPage(1); }}
+          onChange={e => { setRiskFilter(e.target.value as Pupil['riskLevel'] | 'all'); setPage(1); }}
           className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 outline-none"
         >
           <option value="all">All Risk Levels</option>

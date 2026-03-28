@@ -2,11 +2,23 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { getClassById, getPupilsByIds } from '../../services/dataService';
 import PupilTable from '../pupils/PupilTable';
+import type { RouteBasePath } from '../../types/domain';
 
-export default function ClassDetail() {
-  const { id } = useParams();
+type ClassDetailProps = {
+  basePath?: RouteBasePath;
+  backPath?: string;
+  backLabel?: string;
+};
+
+export default function ClassDetail({
+  basePath = '/teacher',
+  backPath = '/teacher',
+  backLabel = 'Back to My Classes',
+}: ClassDetailProps) {
+  const { id, teacherId } = useParams();
   const navigate = useNavigate();
   const cls = getClassById(id);
+  const resolvedBackPath = teacherId ? `/dashboard/staff/${teacherId}` : backPath;
 
   if (!cls) return <p className="text-gray-500">Class not found</p>;
 
@@ -15,10 +27,10 @@ export default function ClassDetail() {
   return (
     <div className="max-w-7xl space-y-4">
       <button
-        onClick={() => navigate('/teacher')}
+        onClick={() => navigate(resolvedBackPath)}
         className="flex items-center gap-1 text-sm text-gray-500 hover:text-sky-600 transition-colors"
       >
-        <ArrowLeft className="w-4 h-4" /> Back to My Classes
+        <ArrowLeft className="w-4 h-4" /> {backLabel}
       </button>
 
       <div className="bg-white rounded-xl border border-gray-200 p-5">
@@ -42,7 +54,7 @@ export default function ClassDetail() {
         </div>
       </div>
 
-      <PupilTable basePath="/teacher" pupils={pupils} />
+      <PupilTable basePath={basePath} pupils={pupils} />
     </div>
   );
 }

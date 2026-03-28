@@ -1,26 +1,26 @@
-import { HelpCircle, Shield, AlertTriangle, BarChart3, MessageSquare } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
 
 export default function HelpPage() {
   const faqs = [
     {
       q: 'What do the risk scores mean?',
-      a: 'Risk scores (0-100%) indicate the likelihood a pupil may need additional support. They combine attendance, behaviour, academic, and wellbeing data. High risk (>75%) means significant pattern shifts detected. Medium (50-75%) means emerging concerns. Low (<50%) means no current concerns.',
+      a: 'Risk scores (0-100%) indicate how closely a pupil\'s current pattern resembles historical patterns that later led to negative outcomes or significant support needs. High risk (>75%) means a stronger pattern match and more urgent review. Medium (50-75%) means emerging concern. Low (<50%) means no strong current pattern match.',
     },
     {
-      q: 'How are risk scores calculated?',
-      a: 'Risk scores combine: Attendance (35%), Behaviour (25%), Academic performance (20%), Wellbeing survey (15%), and Context factors like FSM/SEND status (5%). Higher scores indicate more risk factors.',
+      q: 'How are predictions generated?',
+      a: 'Clinx combines attendance, behaviour, academic, wellbeing, and contextual signals from systems schools already use. The model learns from past data patterns and later outcomes, such as CPOMS chronology, to identify pupils whose current signals may suggest a future negative outcome without any extra data entry from teachers.',
     },
     {
       q: 'What should I do when a pupil is flagged?',
-      a: 'Review the pupil detail page for context. Consider the suggested actions. Use professional judgement — Clinx provides data, not diagnoses. Log your observations in the Notes tab. Acknowledge the alert so other staff know it\'s been seen.',
+      a: 'Review the pupil detail page for context, contributing signals, and predicted outcomes. Consider the suggested actions. Use professional judgement; Clinx provides decision support, not diagnoses. Acknowledge the alert so other staff know it has been seen, then follow normal pastoral or safeguarding processes.',
     },
     {
       q: 'Where does the data come from?',
-      a: 'Clinx connects to your school\'s existing systems: Arbor MIS (attendance, SEND, FSM), Class Charts (behaviour), and Google Classroom (homework). Data is synced automatically.',
+      a: 'Clinx connects to your school\'s existing systems: Arbor MIS (attendance, SEND, FSM), Class Charts (behaviour and homework), and CPOMS (safeguarding chronology). The aim is to work with data schools already collect rather than creating new forms or admin processes.',
     },
     {
-      q: 'Who can see pupil data?',
-      a: 'Teachers see data for pupils in their classes only. School admins see all pupils. Site admins manage platform-level settings. All access is logged for safeguarding compliance.',
+      q: 'Will this create extra workload for teachers?',
+      a: 'The intention is the opposite. Clinx is designed to reduce time spent manually piecing together signals from different systems by surfacing likely concerns early and routing them to the right staff with clear context.',
     },
   ];
 

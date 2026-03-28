@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { MessageSquare, Plus } from 'lucide-react';
-import { getNotesForPupil, addNoteForPupil } from '../../services/dataService';
 import { useAuth } from '../../context/AuthContext';
+import { useAppData } from '../../context/AppDataContext';
 import type { Pupil, StaffNote } from '../../types/domain';
 
 type NotesTabProps = {
@@ -11,7 +11,8 @@ type NotesTabProps = {
 
 export default function NotesTab({ pupil }: NotesTabProps) {
   const { user } = useAuth();
-  const [notes, setNotes] = useState<StaffNote[]>(getNotesForPupil(pupil.id));
+  const { getNotesForPupil, addNoteForPupil } = useAppData();
+  const [notes, setNotes] = useState<StaffNote[]>(() => getNotesForPupil(pupil.id));
   const [newNote, setNewNote] = useState('');
   const [showForm, setShowForm] = useState(false);
 

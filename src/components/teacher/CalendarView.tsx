@@ -1,11 +1,15 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, AlertTriangle, Brain, BookOpen, ArrowRight, Clock3, CheckCircle2, Eye, ClipboardList } from 'lucide-react';
 import { getTeacherById, getClassById, getPupilsByIds, getPeriods, getDays } from '../../services/dataService';
 import { useAuth } from '../../context/AuthContext';
+import { useAppData } from '../../context/AppDataContext';
+import RiskBadge from '../common/RiskBadge';
+import type { TeacherActionStatus } from '../../types/domain';
 
 export default function CalendarView() {
   const { user } = useAuth();
+  const { teacherActions, setTeacherAction } = useAppData();
   const navigate = useNavigate();
   const [weekOffset, setWeekOffset] = useState(0);
 
@@ -34,6 +38,56 @@ export default function CalendarView() {
 
     return map;
   }, [days, teacher]);
+
+  const teacherClasses = useMemo(() => {
+    if (!teacher) return [];
+    const seen = new Set<string>();
+
+    return days.flatMap((day) => teacher.timetable[day] || [])
+      .filter((slot): slot is NonNullable<typeof slot> => Boolean(slot))
+      .filter((slot) => {
+        if (seen.has(slot.classId)) return false;
+        seen.add(slot.classId);
+        return true;
+      })
+      .map((slot) => getClassById(slot.classId))
+      .filter((schoolClass): schoolClass is NonNullable<typeof schoolClass> => Boolean(schoolClass));
+  }, [days, teacher]);
+
+  const taughtPupils = useMemo(() => {
+    const ids = new Set<string>();
+    teacherClasses.forEach((schoolClass) => {
+      schoolClass.pupils.forEach((pupilId) => ids.add(pupilId));
+    });
+    return getPupilsByIds([...ids]).sort((a, b) => b.riskScore - a.riskScore);
+  }, [teacherClasses]);
+
+  const topPriorityPupils = taughtPupils.slice(0, 5);
+  const highRiskCount = taughtPupils.filter((pupil) => pupil.riskLevel === 'High').length;
+  const mediumRiskCount = taughtPupils.filter((pupil) => pupil.riskLevel === 'Medium').length;
+  const averageAttendance =
+    taughtPupils.length > 0
+      ? Math.round((taughtPupils.reduce((sum, pupil) => sum + pupil.attendance, 0) / taughtPupils.length) * 10) / 10
+      : 0;
+  const atRiskClasses = teacherClasses
+    .map((schoolClass) => ({
+      id: schoolClass.id,
+      name: schoolClass.name,
+      subject: schoolClass.subject,
+      high: classRiskMap[schoolClass.id]?.high || 0,
+      medium: classRiskMap[schoolClass.id]?.medium || 0,
+    }))
+    .sort((a, b) => (b.high * 2 + b.medium) - (a.high * 2 + a.medium))
+    .slice(0, 3);
+
+  const priorityQueue = topPriorityPupils.map((pupil) => ({
+    pupil,
+    status: teacherActions[pupil.id] || 'New',
+  }));
+  const followUpCount = priorityQueue.filter((item) => item.status === 'Follow Up Planned').length;
+  const monitoringCount = priorityQueue.filter((item) => item.status === 'Monitoring').length;
+
+  const actionOptions: TeacherActionStatus[] = ['Acknowledged', 'Monitoring', 'Follow Up Planned'];
 
   if (!teacher) {
     return <p className="text-gray-500">Teacher data not available</p>;
@@ -64,64 +118,259 @@ export default function CalendarView() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="w-24 px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-left">Time</th>
-              {days.map((day) => (
-                <th key={day} className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-left">
-                  {day}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {periods.map((period, periodIndex) => (
-              <tr key={period.id}>
-                <td className="px-4 py-1 text-xs text-gray-400 align-top pt-3">
-                  <div className="font-medium">{period.label}</div>
-                  <div>{period.start}-{period.end}</div>
-                </td>
-                {days.map((day) => {
-                  const slot = teacher.timetable[day]?.[periodIndex];
-                  if (!slot) {
-                    return (
-                      <td key={day} className="px-2 py-1">
-                        <div className="h-16" />
-                      </td>
-                    );
-                  }
+      <div className="grid grid-cols-4 gap-4">
+        {[
+          { label: 'Pupils Taught', value: taughtPupils.length, icon: BookOpen, tone: 'text-sky-700', bg: 'bg-sky-50 border-sky-200' },
+          { label: 'High Risk Pupils', value: highRiskCount, icon: AlertTriangle, tone: 'text-red-700', bg: 'bg-red-50 border-red-200' },
+          { label: 'Medium Risk Pupils', value: mediumRiskCount, icon: Brain, tone: 'text-amber-700', bg: 'bg-amber-50 border-amber-200' },
+          { label: 'Avg Attendance', value: `${averageAttendance}%`, icon: Clock3, tone: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' },
+        ].map((item) => (
+          <div key={item.label} className={`rounded-2xl border p-4 ${item.bg}`}>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{item.label}</p>
+              <item.icon className={`w-4 h-4 ${item.tone}`} />
+            </div>
+            <p className={`text-3xl font-bold mt-3 ${item.tone}`}>{item.value}</p>
+          </div>
+        ))}
+      </div>
 
-                  const risks = classRiskMap[slot.classId] || { high: 0, medium: 0 };
-                  return (
-                    <td key={day} className="px-2 py-1">
-                      <button
-                        onClick={() => navigate(`/teacher/class/${slot.classId}`)}
-                        className="w-full h-16 bg-sky-50 border border-sky-200 rounded-lg p-2 text-left hover:bg-sky-100 hover:border-sky-300 transition-colors"
-                      >
-                        <p className="text-xs font-semibold text-sky-800 truncate">{slot.className}</p>
-                        <p className="text-xs text-sky-600 truncate">{slot.room}</p>
-                        <div className="flex gap-1 mt-1">
-                          {risks.high > 0 && (
-                            <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0 rounded-full font-medium">
-                              High: {risks.high}
-                            </span>
-                          )}
-                          {risks.medium > 0 && (
-                            <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0 rounded-full font-medium">
-                              Medium: {risks.medium}
-                            </span>
-                          )}
-                        </div>
-                      </button>
+      <div className="grid grid-cols-[1.7fr_1fr] gap-6 items-start">
+        <div className="space-y-4">
+          <div className="bg-gradient-to-r from-sky-700 via-sky-600 to-cyan-600 rounded-2xl p-6 text-white">
+            <div className="flex items-start justify-between gap-6">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-100">Teacher Overview</p>
+                <h2 className="text-2xl font-bold mt-2">Who needs attention first?</h2>
+                <p className="text-sm text-sky-50/90 mt-2 max-w-2xl">
+                  Clinx is highlighting pupils across your classes whose current signals most closely resemble past
+                  patterns that led to later concerns, so you can prioritise support without digging through multiple systems.
+                </p>
+              </div>
+              <button
+                onClick={() => navigate('/teacher/alerts')}
+                className="shrink-0 rounded-xl bg-white/15 px-4 py-2 text-sm font-medium hover:bg-white/20 transition-colors"
+              >
+                View Alerts
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Weekly Timetable</h2>
+                <p className="text-sm text-gray-500 mt-1">Class risk indicators are shown directly in each lesson slot.</p>
+              </div>
+            </div>
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="w-24 px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-left">Time</th>
+                  {days.map((day) => (
+                    <th key={day} className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-left">
+                      {day}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {periods.map((period, periodIndex) => (
+                  <tr key={period.id}>
+                    <td className="px-4 py-1 text-xs text-gray-400 align-top pt-3">
+                      <div className="font-medium">{period.label}</div>
+                      <div>{period.start}-{period.end}</div>
                     </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                    {days.map((day) => {
+                      const slot = teacher.timetable[day]?.[periodIndex];
+                      if (!slot) {
+                        return (
+                          <td key={day} className="px-2 py-1">
+                            <div className="h-20 rounded-lg bg-gray-50/70" />
+                          </td>
+                        );
+                      }
+
+                      const risks = classRiskMap[slot.classId] || { high: 0, medium: 0 };
+                      return (
+                        <td key={day} className="px-2 py-1">
+                          <button
+                            onClick={() => navigate(`/teacher/class/${slot.classId}`)}
+                            className="w-full h-20 bg-sky-50 border border-sky-200 rounded-xl px-3 py-2 text-left hover:bg-sky-100 hover:border-sky-300 transition-colors flex flex-col justify-between overflow-hidden"
+                          >
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-sky-900 truncate">{slot.className}</p>
+                              <p className="text-xs text-sky-700 truncate">{slot.subject} · {slot.room}</p>
+                            </div>
+                            <div className="min-w-0">
+                              {risks.high > 0 || risks.medium > 0 ? (
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  {risks.high > 0 && (
+                                    <span className="text-[11px] leading-none bg-red-100 text-red-700 px-1.5 py-1 rounded-full font-medium">
+                                      H {risks.high}
+                                    </span>
+                                  )}
+                                  {risks.medium > 0 && (
+                                    <span className="text-[11px] leading-none bg-amber-100 text-amber-700 px-1.5 py-1 rounded-full font-medium">
+                                      M {risks.medium}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-[11px] leading-none bg-emerald-100 text-emerald-700 px-1.5 py-1 rounded-full font-medium inline-flex">
+                                  Stable
+                                </span>
+                              )}
+                            </div>
+                          </button>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="bg-white rounded-2xl border border-gray-200 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Highest Priority Pupils</h2>
+                <p className="text-sm text-gray-500 mt-1">The pupils you teach with the strongest current pattern match.</p>
+              </div>
+              <Brain className="w-5 h-5 text-sky-600" />
+            </div>
+            <div className="space-y-3">
+              {topPriorityPupils.map((pupil) => (
+                <button
+                  key={pupil.id}
+                  onClick={() => navigate(`/teacher/pupils/${pupil.id}`)}
+                  className="w-full text-left rounded-xl border border-gray-200 p-4 hover:border-sky-300 hover:bg-sky-50/50 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{pupil.id}</p>
+                      <p className="text-xs text-gray-500 mt-1">Year {pupil.year} · Form {pupil.form}</p>
+                    </div>
+                    <RiskBadge level={pupil.riskLevel} score={pupil.riskScore} />
+                  </div>
+                  <p className="text-xs text-gray-600 mt-3 line-clamp-2">
+                    {pupil.aiExplanation[0]?.text || 'Multiple emerging signals detected across existing school systems.'}
+                  </p>
+                  <div className="flex items-center gap-3 mt-3 text-xs text-gray-500">
+                    <span>Attendance {pupil.attendance}%</span>
+                    <span>Behaviour {pupil.behaviourIncidents}</span>
+                    <span>Homework {pupil.homeworkPct}%</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-200 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Action Queue</h2>
+                <p className="text-sm text-gray-500 mt-1">Lightweight next steps for the pupils most likely to need your attention.</p>
+              </div>
+              <ClipboardList className="w-5 h-5 text-sky-600" />
+            </div>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="rounded-xl bg-amber-50 border border-amber-200 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Monitoring</p>
+                <p className="text-2xl font-bold text-amber-900 mt-2">{monitoringCount}</p>
+              </div>
+              <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Follow Up Planned</p>
+                <p className="text-2xl font-bold text-emerald-900 mt-2">{followUpCount}</p>
+              </div>
+            </div>
+            <div className="space-y-3">
+              {priorityQueue.slice(0, 4).map(({ pupil, status }) => (
+                <div key={pupil.id} className="rounded-xl border border-gray-200 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{pupil.id}</p>
+                      <p className="text-xs text-gray-500 mt-1">{pupil.aiExplanation[0]?.text || 'Pattern shift detected across existing school systems.'}</p>
+                    </div>
+                    <span
+                      className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        status === 'Follow Up Planned'
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : status === 'Monitoring'
+                            ? 'bg-amber-100 text-amber-700'
+                            : status === 'Acknowledged'
+                              ? 'bg-sky-100 text-sky-700'
+                              : 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
+                      {status}
+                    </span>
+                  </div>
+                  <div className="flex gap-2 mt-3 flex-wrap">
+                    {actionOptions.map((option) => (
+                      <button
+                        key={option}
+                        onClick={() => setTeacherAction(pupil.id, option)}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                          status === option
+                            ? 'bg-sky-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
+                    <span className="flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      Low admin overhead
+                    </span>
+                    <button
+                      onClick={() => navigate(`/teacher/pupils/${pupil.id}`)}
+                      className="flex items-center gap-1 text-sky-700 hover:text-sky-800 font-medium"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      View pupil
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-200 p-5">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Classes to Watch</h2>
+            <div className="space-y-3">
+              {atRiskClasses.map((schoolClass) => (
+                <button
+                  key={schoolClass.id}
+                  onClick={() => navigate(`/teacher/class/${schoolClass.id}`)}
+                  className="w-full text-left rounded-xl bg-slate-50 border border-slate-200 p-4 hover:bg-slate-100 transition-colors"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{schoolClass.name}</p>
+                      <p className="text-xs text-gray-500 mt-1">{schoolClass.subject}</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-gray-400" />
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
+                      High {schoolClass.high}
+                    </span>
+                    <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                      Medium {schoolClass.medium}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

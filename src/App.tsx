@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { AppDataProvider } from './context/AppDataContext';
 import { ToastProvider } from './components/common/Toast';
 import Layout from './components/layout/Layout';
 import LandingPage from './components/landing/LandingPage';
@@ -9,9 +10,12 @@ import PupilTable from './components/pupils/PupilTable';
 import PupilDetail from './components/pupils/PupilDetail';
 import AlertList from './components/alerts/AlertList';
 import StaffManagement from './components/staff/StaffManagement';
+import TeacherProfile from './components/staff/TeacherProfile';
+import DataSourcesPage from './components/dashboard/DataSourcesPage';
 import SettingsPage from './components/dashboard/SettingsPage';
 import SiteAdminDashboard from './components/admin/SiteAdminDashboard';
 import SchoolsList from './components/admin/SchoolsList';
+import OnboardingHub from './components/admin/OnboardingHub';
 import CalendarView from './components/teacher/CalendarView';
 import ClassDetail from './components/teacher/ClassDetail';
 import HelpPage from './components/teacher/HelpPage';
@@ -42,6 +46,7 @@ function AppRoutes() {
       <Route element={<ProtectedRoute roles={['siteAdmin']}><Layout /></ProtectedRoute>}>
         <Route path="/admin" element={<SiteAdminDashboard />} />
         <Route path="/admin/schools" element={<SchoolsList />} />
+        <Route path="/admin/onboarding" element={<OnboardingHub />} />
       </Route>
 
       {/* School Admin routes */}
@@ -51,6 +56,12 @@ function AppRoutes() {
         <Route path="/dashboard/pupils/:id" element={<PupilDetail />} />
         <Route path="/dashboard/alerts" element={<AlertList />} />
         <Route path="/dashboard/staff" element={<StaffManagement />} />
+        <Route path="/dashboard/staff/:id" element={<TeacherProfile />} />
+        <Route path="/dashboard/data-sources" element={<DataSourcesPage />} />
+        <Route
+          path="/dashboard/staff/:teacherId/class/:id"
+          element={<ClassDetail basePath="/dashboard" backPath="/dashboard/staff" backLabel="Back to Staff" />}
+        />
         <Route path="/dashboard/settings" element={<SettingsPage />} />
       </Route>
 
@@ -70,9 +81,11 @@ export default function App() {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
       <AuthProvider>
-        <ToastProvider>
-          <AppRoutes />
-        </ToastProvider>
+        <AppDataProvider>
+          <ToastProvider>
+            <AppRoutes />
+          </ToastProvider>
+        </AppDataProvider>
       </AuthProvider>
     </BrowserRouter>
   );

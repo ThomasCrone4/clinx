@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { getAllAlerts } from '../../services/dataService';
+import { useAppData } from '../../context/AppDataContext';
 import RiskBadge from '../common/RiskBadge';
 import { Clock } from 'lucide-react';
 import type { RouteBasePath } from '../../types/domain';
@@ -10,8 +10,8 @@ type RecentAlertsProps = {
 
 export default function RecentAlerts({ basePath = '/dashboard' }: RecentAlertsProps) {
   const navigate = useNavigate();
-  const alerts = getAllAlerts()
-    .filter(a => a.status === 'Unread')
+  const { unreadAlerts } = useAppData();
+  const alerts = [...unreadAlerts]
     .sort((a, b) => b.riskScore - a.riskScore)
     .slice(0, 10);
 

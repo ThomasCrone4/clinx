@@ -40,7 +40,13 @@ export default function PupilOverview({ pupil }: PupilOverviewProps) {
 
   const wellSparkline = pupil.wellbeingHistory.map(w => ({ v: w.score }));
 
-  const cards = [
+  const cards: Array<{
+    label: string;
+    value: string | number;
+    trend: AttendanceTrend;
+    sparkline: Array<{ v: number }>;
+    color: string;
+  }> = [
     {
       label: 'Attendance',
       value: `${pupil.attendance}%`,

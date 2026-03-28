@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { getAllAlerts, getAlertsForTeacher, acknowledgeAlert, dismissAlert } from '../../services/dataService';
 import { useAuth } from '../../context/AuthContext';
+import { useAppData } from '../../context/AppDataContext';
 import AlertCard from './AlertCard';
 import type { AlertStatus, RouteBasePath } from '../../types/domain';
 
@@ -12,13 +12,17 @@ type AlertSortMode = 'risk' | 'newest';
 
 export default function AlertList({ basePath = '/dashboard' }: AlertListProps) {
   const { user } = useAuth();
+  const { alerts, acknowledgeAlert, dismissAlert } = useAppData();
   const [filter, setFilter] = useState<AlertStatus | 'All'>('Unread');
   const [sortBy, setSortBy] = useState<AlertSortMode>('risk');
   const [, forceUpdate] = useState(0);
+  const filterOptions: Array<AlertStatus | 'All'> = ['Unread', 'Acknowledged', 'All'];
+  const sortOptions: Array<{ key: AlertSortMode; label: string }> = [
+    { key: 'risk', label: 'Highest Risk' },
+    { key: 'newest', label: 'Newest' },
+  ];
 
-  const allAlerts = user?.role === 'teacher'
-    ? getAlertsForTeacher(user.name)
-    : getAllAlerts();
+  const allAlerts = user?.role === 'teacher' ? alerts.filter((alert) => alert.assignedTeachers.includes(user.name)) : alerts;
 
   const filtered = useMemo(() => {
     let result = allAlerts;
@@ -46,7 +50,7 @@ export default function AlertList({ basePath = '/dashboard' }: AlertListProps) {
 
       <div className="flex items-center gap-3">
         <div className="flex bg-white rounded-lg border border-gray-200 p-0.5">
-          {['Unread', 'Acknowledged', 'All'].map(f => (
+          {filterOptions.map(f => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -59,7 +63,7 @@ export default function AlertList({ basePath = '/dashboard' }: AlertListProps) {
           ))}
         </div>
         <div className="flex bg-white rounded-lg border border-gray-200 p-0.5">
-          {[{ key: 'risk', label: 'Highest Risk' }, { key: 'newest', label: 'Newest' }].map(s => (
+          {sortOptions.map(s => (
             <button
               key={s.key}
               onClick={() => setSortBy(s.key)}

@@ -29,7 +29,7 @@ export default function LoginPage() {
       return;
     }
 
-    setError(result.error);
+    setError('error' in result ? result.error : 'Unable to sign in');
   }
 
   function quickLogin(account: DemoAccount) {
@@ -46,10 +46,13 @@ export default function LoginPage() {
     <div className="min-h-screen bg-slate-50 flex items-center justify-center">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-2">
+          <button
+            onClick={() => navigate('/')}
+            className="flex items-center justify-center gap-2 mb-2 mx-auto hover:opacity-85 transition-opacity"
+          >
             <Shield className="w-10 h-10 text-sky-600" />
             <span className="text-2xl font-bold text-sky-700">Clinx</span>
-          </div>
+          </button>
           <p className="text-gray-500 text-sm">Sign in to your account</p>
         </div>
 

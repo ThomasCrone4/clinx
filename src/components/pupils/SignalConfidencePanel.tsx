@@ -33,9 +33,9 @@ export default function SignalConfidencePanel({ pupil }: SignalConfidencePanelPr
     {
       label: 'CPOMS',
       icon: FileWarning,
-      metric: `${cpomsConcerns.length} linked concerns`,
-      detail: cpomsConcerns[0]?.category || 'No open concern logged',
-      status: cpomsConcerns.length > 0 ? 'Connected' : 'No linked case',
+      metric: `${cpomsConcerns.length} historical concerns`,
+      detail: cpomsConcerns[0]?.category || 'No historical chronology linked',
+      status: cpomsConcerns.length > 0 ? 'Historical label available' : 'No linked history',
     },
   ];
 

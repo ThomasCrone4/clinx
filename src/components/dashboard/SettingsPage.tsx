@@ -49,7 +49,7 @@ export default function SettingsPage() {
     {
       name: 'CPOMS',
       status: 'Monitoring',
-      detail: `${sourceData.cpoms.concerns.length} concerns available for chronology matching`,
+      detail: `${sourceData.cpoms.concerns.length} historical concerns available for chronology matching and model validation`,
       sync: sourceData.cpoms.concerns[0]?.created_at || '2026-03-28T08:20:00Z',
     },
   ];
@@ -205,8 +205,9 @@ export default function SettingsPage() {
 
         <div className="mt-4 rounded-lg bg-sky-50 border border-sky-200 p-4">
           <p className="text-sm text-sky-700">
-            Clinx is currently simulating live CSV/API feeds from Arbor, Class Charts, and CPOMS so schools can see how
-            source data quality, sync timing, and safeguarding chronology affect confidence in flagged concerns.
+            Clinx is currently simulating a realistic setup where historical CSV exports can train the model and live Arbor
+            or Class Charts feeds can support ongoing scoring. Safeguarding chronology is shown here as a historical or
+            batch-fed confidence source rather than a guaranteed live API feed.
           </p>
         </div>
       </div>

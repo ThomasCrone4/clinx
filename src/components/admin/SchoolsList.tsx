@@ -1,46 +1,17 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, X, CheckCircle2, Database, Brain, Cable } from 'lucide-react';
-import { getPupilStats } from '../../services/dataService';
-import { useAppData } from '../../context/AppDataContext';
+import { useAdminData } from '../../context/AdminDataContext';
 import { useToast } from '../common/Toast';
+import type { IntegrationMode, NewSchoolPayload, TrainingMode } from '../../context/AdminDataContext';
 
-type SchoolStatus = 'Active' | 'Onboarding' | 'Training';
-type IntegrationMode = 'Direct API Integration' | 'Scheduled CSV Import' | 'Hybrid Setup';
-type TrainingMode = 'Historical CSV Training' | 'API Backfill Training' | 'Go Live Without Training';
-
-type SchoolRow = {
-  id: string;
-  name: string;
-  location: string;
-  pupils: number;
-  highRisk: number;
-  alerts: number;
-  status: SchoolStatus;
-  onboardingStage: string;
-  integration: string;
-};
-
-type OnboardingForm = {
-  schoolName: string;
-  location: string;
-  pupilEstimate: string;
-  adminName: string;
-  adminEmail: string;
-  integrationMode: IntegrationMode;
-  trainingMode: TrainingMode;
-  connectArbor: boolean;
-  connectClassCharts: boolean;
-  connectCpoms: boolean;
-};
-
-const emptyForm: OnboardingForm = {
+const emptyForm: NewSchoolPayload = {
   schoolName: '',
   location: '',
   pupilEstimate: '600',
   adminName: '',
   adminEmail: '',
-  integrationMode: 'Hybrid Setup',
+  integrationMode: 'Hybrid Rollout',
   trainingMode: 'Historical CSV Training',
   connectArbor: true,
   connectClassCharts: true,
@@ -49,45 +20,18 @@ const emptyForm: OnboardingForm = {
 
 export default function SchoolsList() {
   const navigate = useNavigate();
-  const stats = getPupilStats();
-  const { unreadAlerts } = useAppData();
-  const alerts = unreadAlerts;
+  const { schools, addSchool } = useAdminData();
   const { addToast } = useToast();
-
-  const initialSchools = useMemo<SchoolRow[]>(
-    () => [
-      {
-        id: 'school-dedworth',
-        name: 'Dedworth Middle School',
-        location: 'Windsor, UK',
-        pupils: stats.total,
-        highRisk: stats.high,
-        alerts: alerts.length,
-        status: 'Active',
-        onboardingStage: 'Live',
-        integration: 'Hybrid Setup',
-      },
-      {
-        id: 'school-hillview',
-        name: 'Hillview Academy',
-        location: 'Reading, UK',
-        pupils: 780,
-        highRisk: 0,
-        alerts: 0,
-        status: 'Onboarding',
-        onboardingStage: 'Integration discovery',
-        integration: 'Direct API Integration',
-      },
-    ],
-    [alerts.length, stats.high, stats.total],
-  );
-
-  const [schools, setSchools] = useState<SchoolRow[]>(initialSchools);
   const [showModal, setShowModal] = useState(false);
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState<OnboardingForm>(emptyForm);
+  const [form, setForm] = useState<NewSchoolPayload>(emptyForm);
 
   const onboardingSchools = schools.filter((school) => school.status !== 'Active').length;
+  const activeSchools = schools.filter((school) => school.status === 'Active').length;
+  const totalPupils = schools.reduce((sum, school) => sum + school.pupils, 0);
+  const totalAlerts = schools.reduce((sum, school) => sum + school.alerts, 0);
+  const hybridSchools = schools.filter((school) => school.onboarding.integrationMode === 'Hybrid Rollout').length;
+  const trainingSchools = schools.filter((school) => school.status === 'Training').length;
 
   function closeModal() {
     setShowModal(false);
@@ -103,32 +47,17 @@ export default function SchoolsList() {
       return;
     }
 
-    setSchools((prev) => [
-      {
-        id: `school-${Date.now()}`,
-        name: form.schoolName.trim(),
-        location: form.location.trim() || 'Location pending',
-        pupils: Number(form.pupilEstimate) || 0,
-        highRisk: 0,
-        alerts: 0,
-        status: form.trainingMode === 'Go Live Without Training' ? 'Onboarding' : 'Training',
-        onboardingStage:
-          form.trainingMode === 'Go Live Without Training' ? 'Connector setup queued' : 'Historical model training queued',
-        integration: form.integrationMode,
-      },
-      ...prev,
-    ]);
-
+    addSchool(form);
     addToast('School onboarding created', 'success');
     closeModal();
   }
 
   return (
-    <div className="max-w-6xl space-y-4">
+    <div className="max-w-6xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Schools</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage live schools and new onboarding journeys</p>
+          <p className="text-sm text-gray-500 mt-1">Manage live schools, rollout progress, and new onboarding journeys</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
@@ -138,10 +67,30 @@ export default function SchoolsList() {
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="bg-white rounded-xl border border-gray-200 p-5 flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">School Rollout Workspace</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Add new schools, track integration pathways, and manage historical-training rollouts in one place.
+          </p>
+        </div>
+        <button
+          onClick={() => navigate('/admin/onboarding')}
+          className="flex items-center gap-1.5 px-4 py-2 bg-sky-600 text-white text-sm rounded-lg font-medium hover:bg-sky-700 transition-colors"
+        >
+          <Cable className="w-4 h-4" /> Open Onboarding Hub
+        </button>
+      </div>
+
+      <div className="grid grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Total Schools</p>
+          <p className="text-3xl font-bold text-gray-900 mt-3">{schools.length}</p>
+          <p className="text-sm text-gray-500 mt-1">Managed across live and onboarding environments</p>
+        </div>
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Live Schools</p>
-          <p className="text-3xl font-bold text-gray-900 mt-3">{schools.filter((school) => school.status === 'Active').length}</p>
+          <p className="text-3xl font-bold text-emerald-700 mt-3">{activeSchools}</p>
           <p className="text-sm text-gray-500 mt-1">Currently running predictive workflows</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-4">
@@ -150,13 +99,56 @@ export default function SchoolsList() {
           <p className="text-sm text-gray-500 mt-1">Schools being connected, trained, or configured</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Preferred Setup</p>
-          <p className="text-3xl font-bold text-emerald-700 mt-3">Hybrid</p>
-          <p className="text-sm text-gray-500 mt-1">API integrations plus historical CSV model training</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Managed Pupils</p>
+          <p className="text-3xl font-bold text-gray-900 mt-3">{totalPupils}</p>
+          <p className="text-sm text-gray-500 mt-1">Across all schools in the Clinx workspace</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Cable className="w-4 h-4 text-sky-600" />
+            <h3 className="text-sm font-semibold text-gray-700">Integration Pipeline</h3>
+          </div>
+          <p className="text-2xl font-bold text-gray-900">{onboardingSchools} schools</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Schools currently moving through onboarding, training, or go-live preparation.
+          </p>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Brain className="w-4 h-4 text-violet-600" />
+            <h3 className="text-sm font-semibold text-gray-700">Training Readiness</h3>
+          </div>
+          <p className="text-2xl font-bold text-gray-900">{trainingSchools} active jobs</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Historical backfill and staged retraining pipelines currently in progress.
+          </p>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Database className="w-4 h-4 text-emerald-600" />
+            <h3 className="text-sm font-semibold text-gray-700">Default Rollout</h3>
+          </div>
+          <p className="text-2xl font-bold text-gray-900">{hybridSchools} hybrid</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Live MIS data with historical CSV-based training remains the main setup path.
+          </p>
         </div>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700">School Portfolio</h3>
+            <p className="text-sm text-gray-500 mt-1">Click a school to open account support and organisation-level admin tools.</p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Active Alerts</p>
+            <p className="text-lg font-semibold text-gray-900 mt-1">{totalAlerts}</p>
+          </div>
+        </div>
         <table className="w-full">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
@@ -174,8 +166,8 @@ export default function SchoolsList() {
             {schools.map((school) => (
               <tr
                 key={school.id}
-                onClick={() => school.name === 'Dedworth Middle School' && navigate('/dashboard')}
-                className={school.name === 'Dedworth Middle School' ? 'hover:bg-sky-50/50 cursor-pointer transition-colors' : 'hover:bg-gray-50/50'}
+                onClick={() => navigate(`/admin/schools/${school.id}`)}
+                className="hover:bg-sky-50/50 cursor-pointer transition-colors"
               >
                 <td className="px-4 py-3 text-sm font-medium text-gray-900">{school.name}</td>
                 <td className="px-4 py-3 text-sm text-gray-600">{school.location}</td>
@@ -184,8 +176,8 @@ export default function SchoolsList() {
                   <span className="text-xs font-medium bg-red-100 text-red-700 px-2 py-0.5 rounded-full">{school.highRisk}</span>
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-600">{school.alerts}</td>
-                <td className="px-4 py-3 text-sm text-gray-600">{school.integration}</td>
-                <td className="px-4 py-3 text-sm text-gray-600">{school.onboardingStage}</td>
+                <td className="px-4 py-3 text-sm text-gray-600">{school.onboarding.integrationMode}</td>
+                <td className="px-4 py-3 text-sm text-gray-600">{school.onboarding.stage}</td>
                 <td className="px-4 py-3">
                   <span
                     className={`text-xs font-medium px-2 py-0.5 rounded-full ${
@@ -211,7 +203,7 @@ export default function SchoolsList() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">New School Onboarding</h3>
-                <p className="text-sm text-gray-500 mt-1">Set up school details, choose integrations, and define how model training should begin.</p>
+                <p className="text-sm text-gray-500 mt-1">Set up school details, choose a realistic data route, and define how historical training should begin.</p>
               </div>
               <button onClick={closeModal}>
                 <X className="w-5 h-5 text-gray-400" />
@@ -299,7 +291,7 @@ export default function SchoolsList() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Integration Mode</label>
                     <div className="grid grid-cols-3 gap-3">
-                      {(['Direct API Integration', 'Scheduled CSV Import', 'Hybrid Setup'] as IntegrationMode[]).map((option) => (
+                      {(['CSV-First Setup', 'Live MIS/API + CSV Outcomes', 'Hybrid Rollout'] as IntegrationMode[]).map((option) => (
                         <button
                           key={option}
                           type="button"
@@ -318,7 +310,7 @@ export default function SchoolsList() {
                     {[
                       { key: 'connectArbor', label: 'Arbor MIS', icon: Database },
                       { key: 'connectClassCharts', label: 'Class Charts', icon: Cable },
-                      { key: 'connectCpoms', label: 'CPOMS', icon: CheckCircle2 },
+                      { key: 'connectCpoms', label: 'CPOMS historical export', icon: CheckCircle2 },
                     ].map((item) => (
                       <button
                         key={item.key}
@@ -326,16 +318,16 @@ export default function SchoolsList() {
                         onClick={() =>
                           setForm((prev) => ({
                             ...prev,
-                            [item.key]: !prev[item.key as keyof OnboardingForm],
+                            [item.key]: !prev[item.key as keyof NewSchoolPayload],
                           }))
                         }
                         className={`rounded-xl border p-4 text-left ${
-                          form[item.key as keyof OnboardingForm] ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200 bg-white'
+                          form[item.key as keyof NewSchoolPayload] ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200 bg-white'
                         }`}
                       >
                         <item.icon className="w-5 h-5 text-sky-600 mb-3" />
                         <p className="text-sm font-semibold text-gray-900">{item.label}</p>
-                        <p className="text-xs text-gray-500 mt-1">{form[item.key as keyof OnboardingForm] ? 'Included in onboarding' : 'Not included yet'}</p>
+                        <p className="text-xs text-gray-500 mt-1">{form[item.key as keyof NewSchoolPayload] ? 'Included in onboarding' : 'Not included yet'}</p>
                       </button>
                     ))}
                   </div>
@@ -347,7 +339,7 @@ export default function SchoolsList() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Model Training Approach</label>
                     <div className="grid grid-cols-3 gap-3">
-                      {(['Historical CSV Training', 'API Backfill Training', 'Go Live Without Training'] as TrainingMode[]).map((option) => (
+                      {(['Historical CSV Training', 'Scheduled Batch Retraining', 'Pilot Without Model'] as TrainingMode[]).map((option) => (
                         <button
                           key={option}
                           type="button"

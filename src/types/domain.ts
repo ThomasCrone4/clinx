@@ -71,6 +71,10 @@ export type HomeworkHistory = {
 
 export type Pupil = {
   id: string;
+  firstName: string;
+  lastName: string;
+  preferredName: string;
+  fullName: string;
   year: number;
   form: string;
   attendance: number;

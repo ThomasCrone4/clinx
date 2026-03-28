@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
 import { getPupilById } from '../../services/dataService';
+import { useAuth } from '../../context/AuthContext';
 import RiskBadge from '../common/RiskBadge';
 import PupilOverview from './PupilOverview';
 import AttendanceTab from './AttendanceTab';
@@ -14,6 +15,7 @@ import SuggestedActions from './SuggestedActions';
 import ConcernWorkflowPanel from './ConcernWorkflowPanel';
 import SignalConfidencePanel from './SignalConfidencePanel';
 import PredictedOutcomesPanel from './PredictedOutcomesPanel';
+import { canViewPupilNames, getPupilPrimaryLabel, getPupilSecondaryLabel } from '../../utils/pupilDisplay';
 
 const tabs = ['Overview', 'Attendance', 'Behaviour', 'Academic', 'Wellbeing', 'Notes'] as const;
 type PupilDetailTab = typeof tabs[number];
@@ -21,6 +23,7 @@ type PupilDetailTab = typeof tabs[number];
 export default function PupilDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<PupilDetailTab>('Overview');
   const pupil = getPupilById(id);
 
@@ -54,9 +57,12 @@ export default function PupilDetail() {
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl font-bold text-gray-900">{pupil.id}</h1>
+              <h1 className="text-3xl font-bold text-gray-900">{getPupilPrimaryLabel(pupil, user)}</h1>
               <RiskBadge level={pupil.riskLevel} score={pupil.riskScore} size="lg" />
             </div>
+            {canViewPupilNames(user?.role) && (
+              <p className="text-sm text-gray-400 mb-1">{getPupilSecondaryLabel(pupil, user)}</p>
+            )}
             <p className="text-gray-600">Year {pupil.year} - Form {pupil.form}</p>
             <div className="flex items-center gap-2 mt-2">
               {pupil.send !== 'None' && (

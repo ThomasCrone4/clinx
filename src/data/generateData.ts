@@ -121,6 +121,10 @@ function getPupilIdentity(pupil: Pupil) {
   };
 }
 
+function getPupilIdentityById(id: string) {
+  return getPupilIdentity({ id } as Pupil);
+}
+
 function generateTeachers(): Teacher[] {
   const teachers: Teacher[] = [];
   const usedNames = new Set();
@@ -279,6 +283,7 @@ function generatePupils(classes: SchoolClass[]): Pupil[] {
     for (let i = 0; i < adjustedCount; i++) {
       pupilIdx++;
       const id = `C${String(pupilIdx).padStart(4, '0')}`;
+      const identity = getPupilIdentityById(id);
       const isHighRisk = highRiskPositions.has(i);
       const isMediumRisk = !isHighRisk && mediumRiskPositions.has(i);
 
@@ -347,7 +352,12 @@ function generatePupils(classes: SchoolClass[]): Pupil[] {
       };
 
       pupils.push({
-        id, year, form, attendance, attendanceTrend, behaviourIncidents,
+        id,
+        firstName: identity.firstName,
+        lastName: identity.lastName,
+        preferredName: identity.preferredFirstName,
+        fullName: identity.fullName,
+        year, form, attendance, attendanceTrend, behaviourIncidents,
         homeworkPct, wellbeingScore, fsm, send, riskScore, riskLevel,
         riskBreakdown, aiExplanation, attendanceHistory, behaviourHistory,
         wellbeingHistory, homeworkHistory, archetype: archetype?.desc || null,

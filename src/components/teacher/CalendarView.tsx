@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useAppData } from '../../context/AppDataContext';
 import RiskBadge from '../common/RiskBadge';
 import type { TeacherActionStatus } from '../../types/domain';
+import { getPupilPrimaryLabel, getPupilSecondaryLabel } from '../../utils/pupilDisplay';
 
 export default function CalendarView() {
   const { user } = useAuth();
@@ -251,7 +252,7 @@ export default function CalendarView() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">{pupil.id}</p>
+                      <p className="text-sm font-semibold text-gray-900">{getPupilPrimaryLabel(pupil, user)}</p>
                       <p className="text-xs text-gray-500 mt-1">Year {pupil.year} · Form {pupil.form}</p>
                     </div>
                     <RiskBadge level={pupil.riskLevel} score={pupil.riskScore} />
@@ -292,7 +293,7 @@ export default function CalendarView() {
                 <div key={pupil.id} className="rounded-xl border border-gray-200 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">{pupil.id}</p>
+                      <p className="text-sm font-semibold text-gray-900">{getPupilPrimaryLabel(pupil, user)}</p>
                       <p className="text-xs text-gray-500 mt-1">{pupil.aiExplanation[0]?.text || 'Pattern shift detected across existing school systems.'}</p>
                     </div>
                     <span

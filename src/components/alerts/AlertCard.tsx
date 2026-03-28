@@ -1,7 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { Clock, Eye, Check, X } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { getPupilById } from '../../services/dataService';
 import RiskBadge from '../common/RiskBadge';
 import type { Alert, RouteBasePath } from '../../types/domain';
+import { getPupilPrimaryLabel } from '../../utils/pupilDisplay';
 
 type AlertCardProps = {
   alert: Alert;
@@ -12,6 +15,8 @@ type AlertCardProps = {
 
 export default function AlertCard({ alert, onAcknowledge, onDismiss, basePath = '/dashboard' }: AlertCardProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const pupil = getPupilById(alert.pupilId);
 
   function timeAgo(ts: string) {
     const diff = Date.now() - new Date(ts).getTime();
@@ -28,7 +33,7 @@ export default function AlertCard({ alert, onAcknowledge, onDismiss, basePath = 
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-sm font-bold text-gray-900">{alert.pupilId}</span>
+            <span className="text-sm font-bold text-gray-900">{pupil ? getPupilPrimaryLabel(pupil, user) : alert.pupilId}</span>
             <RiskBadge level={alert.riskLevel} score={alert.riskScore} />
             <span className="flex items-center gap-1 text-xs text-gray-400">
               <Clock className="w-3 h-3" /> {timeAgo(alert.timestamp)}

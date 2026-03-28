@@ -13,7 +13,7 @@ export default function LandingPage() {
     role: 'School leader',
     school: '',
     pupils: '600',
-    systems: 'Arbor, Class Charts, CPOMS',
+    systems: 'Arbor, Class Charts, CPOMS export',
     priorities: '',
   });
 
@@ -26,7 +26,7 @@ export default function LandingPage() {
     {
       icon: BarChart3,
       title: 'Predicts Future Negative Outcomes',
-      desc: 'Machine learning learns from historical patterns in input data and later outcomes, helping schools spot pupils who may need support earlier.',
+      desc: 'Machine learning learns from historical patterns in school data and later recorded outcomes, helping schools spot pupils who may need support earlier.',
     },
     {
       icon: Bell,
@@ -56,7 +56,7 @@ export default function LandingPage() {
         </h1>
         <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-10">
           Clinx learns from past patterns across systems like Arbor, Class Charts, and CPOMS to help schools intervene
-          earlier, without asking staff to collect more data.
+          earlier, without asking staff to collect more data or maintain another monitoring system.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3 mb-10">
           {[
@@ -160,7 +160,7 @@ export default function LandingPage() {
                   role: 'School leader',
                   school: '',
                   pupils: '600',
-                  systems: 'Arbor, Class Charts, CPOMS',
+                  systems: 'Arbor, Class Charts, CPOMS export',
                   priorities: '',
                 });
               }}
@@ -226,7 +226,7 @@ export default function LandingPage() {
                     value={demoForm.systems}
                     onChange={(event) => setDemoForm((prev) => ({ ...prev, systems: event.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 outline-none"
-                    placeholder="Arbor, Class Charts, CPOMS"
+                    placeholder="Arbor, Class Charts, CPOMS export"
                   />
                 </div>
               </div>
@@ -243,7 +243,7 @@ export default function LandingPage() {
 
               <div className="rounded-lg bg-sky-50 border border-sky-200 p-4 text-sm text-sky-800">
                 Clinx demos can be tailored around your existing data stack, likely onboarding route, and whether you want to
-                see CSV-based historical training, API integrations, or both.
+                see CSV-based historical training, live MIS scoring, or a phased hybrid rollout.
               </div>
 
               <div className="flex justify-end gap-2">

@@ -8,7 +8,7 @@ export default function HelpPage() {
     },
     {
       q: 'How are predictions generated?',
-      a: 'Clinx combines attendance, behaviour, academic, wellbeing, and contextual signals from systems schools already use. The model learns from past data patterns and later outcomes, such as CPOMS chronology, to identify pupils whose current signals may suggest a future negative outcome without any extra data entry from teachers.',
+      a: 'Clinx combines attendance, behaviour, academic, wellbeing, and contextual signals from systems schools already use. The model learns from past data patterns and later outcomes, such as historical CPOMS chronology exports, to identify pupils whose current signals may suggest a future negative outcome without any extra data entry from teachers.',
     },
     {
       q: 'What should I do when a pupil is flagged?',
@@ -16,7 +16,7 @@ export default function HelpPage() {
     },
     {
       q: 'Where does the data come from?',
-      a: 'Clinx connects to your school\'s existing systems: Arbor MIS (attendance, SEND, FSM), Class Charts (behaviour and homework), and CPOMS (safeguarding chronology). The aim is to work with data schools already collect rather than creating new forms or admin processes.',
+      a: 'Clinx connects to your school\'s existing systems: Arbor MIS (attendance, SEND, FSM), Class Charts (behaviour and homework), and historical or batch-fed safeguarding chronology such as CPOMS exports. The aim is to work with data schools already collect rather than creating new forms or admin processes.',
     },
     {
       q: 'Will this create extra workload for teachers?',

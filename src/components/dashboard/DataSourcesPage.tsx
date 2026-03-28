@@ -30,10 +30,10 @@ export default function DataSourcesPage() {
     },
     {
       name: 'CPOMS',
-      mode: 'Chronology API or safeguarding export',
+      mode: 'Historical chronology export or scheduled batch import',
       status: 'Monitoring',
       sync: cpoms.concerns[0]?.created_at || '2026-03-28T08:20:00Z',
-      detail: `${cpoms.concerns.length} concern records linked into the mock chronology`,
+      detail: `${cpoms.concerns.length} historical concern records available for outcome training and chronology review`,
     },
   ];
 
@@ -157,7 +157,7 @@ export default function DataSourcesPage() {
                 { label: 'Pupil identity matching', value: '98%', note: 'UPN, pupil ID, and form registration available' },
                 { label: 'Attendance coverage', value: '96%', note: 'AM/PM session marks available from Arbor sample feed' },
                 { label: 'Behaviour coverage', value: '91%', note: 'Class Charts behaviour rows linked to class and teacher' },
-                { label: 'Safeguarding chronology', value: '84%', note: 'CPOMS concern linking simulated for demo scenarios' },
+                { label: 'Safeguarding chronology', value: '84%', note: 'Historical CPOMS exports mapped for outcome training and review' },
               ].map((item) => (
                 <div key={item.label}>
                   <div className="flex items-center justify-between mb-1">
@@ -173,7 +173,7 @@ export default function DataSourcesPage() {
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Why this matters for the model</h2>
             <div className="space-y-3 text-sm text-gray-600">
-              <p>Clinx uses these connected data sources as model inputs, then learns from later outcome data to identify pupils whose current patterns look similar.</p>
+              <p>Clinx uses Arbor and Class Charts as current model inputs, then learns from later outcome data such as historical CPOMS exports to identify pupils whose current patterns look similar.</p>
               <p>That means schools do not need to create new forms, surveys, or manual tracking processes just to benefit from predictive insight.</p>
               <p>The goal is earlier support with less staff effort, using data that already exists across MIS, behaviour, homework, and chronology systems.</p>
             </div>
@@ -195,14 +195,14 @@ export default function DataSourcesPage() {
               </p>
               <p className="flex items-start gap-2">
                 <ShieldCheck className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-                Safeguarding data is represented carefully, with chronology-style records and no extra operational burden added for frontline staff.
+                Safeguarding data is represented carefully, with chronology-style records used mainly as historical outcome labels unless a school has an agreed export route.
               </p>
             </div>
           </div>
 
           <div className="bg-sky-50 rounded-xl border border-sky-200 p-5">
             <p className="text-sm text-sky-700">
-              In a real deployment, schools could choose CSV import, scheduled SFTP export, or direct API connection depending on their existing systems and governance preferences.
+              In a real deployment, many schools would start with historical CSV exports for model training, then layer in live Arbor or Class Charts connections for current scoring.
             </p>
           </div>
         </div>

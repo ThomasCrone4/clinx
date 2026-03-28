@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AppDataProvider } from './context/AppDataContext';
+import { AdminDataProvider } from './context/AdminDataContext';
 import { ToastProvider } from './components/common/Toast';
 import Layout from './components/layout/Layout';
 import LandingPage from './components/landing/LandingPage';
@@ -16,6 +17,7 @@ import SettingsPage from './components/dashboard/SettingsPage';
 import SiteAdminDashboard from './components/admin/SiteAdminDashboard';
 import SchoolsList from './components/admin/SchoolsList';
 import OnboardingHub from './components/admin/OnboardingHub';
+import SchoolSupportPage from './components/admin/SchoolSupportPage';
 import CalendarView from './components/teacher/CalendarView';
 import ClassDetail from './components/teacher/ClassDetail';
 import HelpPage from './components/teacher/HelpPage';
@@ -46,6 +48,7 @@ function AppRoutes() {
       <Route element={<ProtectedRoute roles={['siteAdmin']}><Layout /></ProtectedRoute>}>
         <Route path="/admin" element={<SiteAdminDashboard />} />
         <Route path="/admin/schools" element={<SchoolsList />} />
+        <Route path="/admin/schools/:id" element={<SchoolSupportPage />} />
         <Route path="/admin/onboarding" element={<OnboardingHub />} />
       </Route>
 
@@ -81,11 +84,13 @@ export default function App() {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
       <AuthProvider>
-        <AppDataProvider>
-          <ToastProvider>
-            <AppRoutes />
-          </ToastProvider>
-        </AppDataProvider>
+        <AdminDataProvider>
+          <AppDataProvider>
+            <ToastProvider>
+              <AppRoutes />
+            </ToastProvider>
+          </AppDataProvider>
+        </AdminDataProvider>
       </AuthProvider>
     </BrowserRouter>
   );

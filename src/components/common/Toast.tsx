@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { createContext, useContext, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { X, CheckCircle, AlertTriangle, Info } from 'lucide-react';
@@ -13,6 +14,22 @@ type Toast = {
 type ToastContextValue = {
   addToast: (message: string, type?: ToastType) => void;
 };
+=======
+import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { X, CheckCircle, AlertTriangle, Info } from 'lucide-react';
+
+type ToastType = 'success' | 'warning' | 'info';
+
+interface Toast {
+  id: number;
+  message: string;
+  type: ToastType;
+}
+
+interface ToastContextValue {
+  addToast: (message: string, type?: ToastType) => void;
+}
+>>>>>>> e32bc16161a97afec281bfc088fa1df03f4d66d5
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 

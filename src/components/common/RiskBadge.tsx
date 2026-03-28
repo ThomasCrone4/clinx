@@ -1,23 +1,32 @@
+<<<<<<< HEAD
 import type { RiskLevel } from '../../types/domain';
 
 const colors = {
+=======
+import type { RiskBadgeProps, RiskLevel } from '../../types';
+
+const colors: Record<RiskLevel, string> = {
+>>>>>>> e32bc16161a97afec281bfc088fa1df03f4d66d5
   High: 'bg-red-100 text-red-700 border-red-200',
   Medium: 'bg-amber-100 text-amber-700 border-amber-200',
   Low: 'bg-emerald-100 text-emerald-700 border-emerald-200',
 };
 
-const dots = {
+const dots: Record<RiskLevel, string> = {
   High: 'bg-red-500',
   Medium: 'bg-amber-500',
   Low: 'bg-emerald-500',
 };
 
+<<<<<<< HEAD
 type RiskBadgeProps = {
   level: RiskLevel;
   score?: number;
   size?: 'sm' | 'lg';
 };
 
+=======
+>>>>>>> e32bc16161a97afec281bfc088fa1df03f4d66d5
 export default function RiskBadge({ level, score, size = 'sm' }: RiskBadgeProps) {
   const cls = colors[level] || colors.Low;
   const dot = dots[level] || dots.Low;

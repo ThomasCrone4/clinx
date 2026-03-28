@@ -5,14 +5,29 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
+<<<<<<< HEAD
     "moduleResolution": "Bundler",
     "allowImportingTsExtensions": false,
+=======
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+>>>>>>> e32bc16161a97afec281bfc088fa1df03f4d66d5
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
+<<<<<<< HEAD
     "strict": false,
     "noImplicitAny": false
   },
   "include": ["src"]
+=======
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src/**/*"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+>>>>>>> e32bc16161a97afec281bfc088fa1df03f4d66d5
 }

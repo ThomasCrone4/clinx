@@ -29,7 +29,13 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "gh-pages": "^6.3.0",
     "globals": "^17.4.0",
+<<<<<<< HEAD
     "typescript": "^5.9.3",
     "vite": "^8.0.1"
+=======
+    "typescript": "^6.0.2",
+    "vite": "^8.0.1",
+    "zustand": "^5.0.12"
+>>>>>>> e32bc16161a97afec281bfc088fa1df03f4d66d5
   }
 }

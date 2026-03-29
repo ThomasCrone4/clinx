@@ -1,8 +1,33 @@
+import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import GuidedTourModal from '../common/GuidedTourModal';
 import Header from './Header';
 import Sidebar from './Sidebar';
 
 export default function Layout() {
+  const { user } = useAuth();
+  const [tourOpen, setTourOpen] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const storageKey = `clinx-tour-seen-${user.role}`;
+    if (!sessionStorage.getItem(storageKey)) {
+      setTourOpen(true);
+      sessionStorage.setItem(storageKey, 'true');
+    }
+  }, [user]);
+
+  useEffect(() => {
+    function handleOpenTour() {
+      setTourOpen(true);
+    }
+
+    window.addEventListener('clinx:open-tour', handleOpenTour);
+    return () => window.removeEventListener('clinx:open-tour', handleOpenTour);
+  }, []);
+
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       <Header />
@@ -12,6 +37,7 @@ export default function Layout() {
           <Outlet />
         </main>
       </div>
+      <GuidedTourModal isOpen={tourOpen} onClose={() => setTourOpen(false)} />
     </div>
   );
 }

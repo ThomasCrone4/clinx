@@ -2,6 +2,7 @@ import RiskSummaryCards from './RiskSummaryCards';
 import QuickStats from './QuickStats';
 import AttendanceChart from './AttendanceChart';
 import RecentAlerts from './RecentAlerts';
+import CohortInsightsPanel from './CohortInsightsPanel';
 
 export default function SchoolAdminDashboard() {
   return (
@@ -12,8 +13,15 @@ export default function SchoolAdminDashboard() {
           Predicted concerns and early intervention priorities across your school.
         </p>
       </div>
+      <div className="rounded-xl border border-sky-200 bg-sky-50 p-4">
+        <p className="text-sm text-sky-800">
+          These insights are drawn from the systems your school already uses, so staff can act earlier without extra
+          data entry or a separate monitoring process.
+        </p>
+      </div>
       <QuickStats />
       <RiskSummaryCards />
+      <CohortInsightsPanel />
       <div className="grid grid-cols-2 gap-6">
         <AttendanceChart />
         <RecentAlerts />

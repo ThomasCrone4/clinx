@@ -21,6 +21,7 @@ import SchoolSupportPage from './components/admin/SchoolSupportPage';
 import CalendarView from './components/teacher/CalendarView';
 import ClassDetail from './components/teacher/ClassDetail';
 import HelpPage from './components/teacher/HelpPage';
+import TrustPage from './components/shared/TrustPage';
 import type { ReactNode } from 'react';
 import type { UserRole } from './types/domain';
 
@@ -38,11 +39,13 @@ function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
 
 function AppRoutes() {
   const { user } = useAuth();
+  const defaultRoute = user ? (user.role === 'siteAdmin' ? '/admin' : user.role === 'teacher' ? '/teacher' : '/dashboard') : '/';
 
   return (
     <Routes>
-      <Route path="/" element={user ? <Navigate to={user.role === 'siteAdmin' ? '/admin' : user.role === 'teacher' ? '/teacher' : '/dashboard'} /> : <LandingPage />} />
-      <Route path="/login" element={user ? <Navigate to={user.role === 'siteAdmin' ? '/admin' : user.role === 'teacher' ? '/teacher' : '/dashboard'} /> : <LoginPage />} />
+      <Route path="/" element={user ? <Navigate to={defaultRoute} /> : <LandingPage />} />
+      <Route path="/login" element={user ? <Navigate to={defaultRoute} /> : <LoginPage />} />
+      <Route path="/trust" element={<TrustPage />} />
 
       {/* Site Admin routes */}
       <Route element={<ProtectedRoute roles={['siteAdmin']}><Layout /></ProtectedRoute>}>
@@ -61,6 +64,7 @@ function AppRoutes() {
         <Route path="/dashboard/staff" element={<StaffManagement />} />
         <Route path="/dashboard/staff/:id" element={<TeacherProfile />} />
         <Route path="/dashboard/data-sources" element={<DataSourcesPage />} />
+        <Route path="/dashboard/trust" element={<TrustPage />} />
         <Route
           path="/dashboard/staff/:teacherId/class/:id"
           element={<ClassDetail basePath="/dashboard" backPath="/dashboard/staff" backLabel="Back to Staff" />}
@@ -75,6 +79,7 @@ function AppRoutes() {
         <Route path="/teacher/pupils/:id" element={<PupilDetail />} />
         <Route path="/teacher/alerts" element={<AlertList basePath="/teacher" />} />
         <Route path="/teacher/help" element={<HelpPage />} />
+        <Route path="/teacher/trust" element={<TrustPage />} />
       </Route>
     </Routes>
   );

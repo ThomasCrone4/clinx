@@ -1,12 +1,15 @@
-import { Bell, LogOut, Shield } from 'lucide-react';
+import { Bell, Compass, LogOut, Shield } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useAppData } from '../../context/AppDataContext';
+import { useAdminData } from '../../context/AdminDataContext';
 import { useNavigate } from 'react-router-dom';
 
 export default function Header() {
   const { user, logout } = useAuth();
   const { unreadAlerts } = useAppData();
+  const { getSchoolById } = useAdminData();
   const navigate = useNavigate();
+  const currentSchool = user?.schoolId ? getSchoolById(user.schoolId) : undefined;
 
   const alerts = user?.role === 'teacher' ? unreadAlerts.filter((alert) => alert.assignedTeachers.includes(user.name)) : unreadAlerts;
   const alertCount = alerts.length;
@@ -14,6 +17,10 @@ export default function Header() {
   function handleLogout() {
     logout();
     navigate('/');
+  }
+
+  function openTour() {
+    window.dispatchEvent(new Event('clinx:open-tour'));
   }
 
   return (
@@ -28,7 +35,7 @@ export default function Header() {
         </button>
         {user && (
           <span className="text-sm text-gray-400 ml-4 hidden lg:block">
-            {user.role === 'siteAdmin' ? 'Site Administration' : 'Dedworth Middle School'}
+            {user.role === 'siteAdmin' ? 'Site Administration' : currentSchool?.name || 'School Workspace'}
           </span>
         )}
       </div>
@@ -48,6 +55,14 @@ export default function Header() {
               )}
             </button>
           )}
+
+          <button
+            onClick={openTour}
+            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-sky-600 transition-colors"
+          >
+            <Compass className="w-4 h-4" />
+            Tour
+          </button>
 
           <div className="flex items-center gap-2 pl-4 border-l border-gray-200">
             <div className="w-8 h-8 bg-sky-100 rounded-full flex items-center justify-center text-sky-700 font-semibold text-sm">

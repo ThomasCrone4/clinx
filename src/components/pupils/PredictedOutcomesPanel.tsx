@@ -20,11 +20,11 @@ export default function PredictedOutcomesPanel({ pupil }: PredictedOutcomesPanel
 
   if (cpomsConcerns.length > 0 || pupil.wellbeingScore <= 4) {
     outcomes.push({
-      label: 'Safeguarding / Pastoral concern escalation',
+      label: 'Pastoral or safeguarding support may be needed',
       likelihood: pupil.riskLevel === 'High' ? 'High likelihood' : 'Moderate likelihood',
       rationale:
         cpomsConcerns.length > 0
-          ? 'Previous concern chronology already exists, so the model is treating current pattern drift as a stronger signal.'
+          ? 'Past concern context already exists, so the model is treating current pattern drift as a stronger signal.'
           : 'Low wellbeing and multi-system pattern drift resemble pupils who later required pastoral or safeguarding support.',
     });
   }
@@ -34,13 +34,13 @@ export default function PredictedOutcomesPanel({ pupil }: PredictedOutcomesPanel
       label: 'Persistent absence or attendance intervention',
       likelihood: pupil.attendance < 80 ? 'High likelihood' : 'Moderate likelihood',
       rationale:
-        'Attendance decline in Arbor is one of the strongest early patterns seen before later negative outcomes in the training examples.',
+        'Attendance decline is one of the strongest early patterns seen before later concerns in similar pupils.',
     });
   }
 
   if (pupil.behaviourIncidents >= 3 || pupil.homeworkPct < 60) {
     outcomes.push({
-      label: 'Behaviour or disengagement escalation',
+      label: 'Behaviour or disengagement support may be needed',
       likelihood: pupil.behaviourIncidents >= 5 ? 'High likelihood' : 'Moderate likelihood',
       rationale:
         'Behaviour and homework shifts from Class Charts suggest disengagement that often precedes wider pastoral concerns.',
@@ -49,7 +49,7 @@ export default function PredictedOutcomesPanel({ pupil }: PredictedOutcomesPanel
 
   if (outcomes.length === 0) {
     outcomes.push({
-      label: 'No acute negative outcome predicted',
+      label: 'No immediate escalation predicted',
       likelihood: 'Low likelihood',
       rationale:
         'Current cross-system signals do not strongly resemble the historical patterns that led to later concern outcomes.',
@@ -65,10 +65,10 @@ export default function PredictedOutcomesPanel({ pupil }: PredictedOutcomesPanel
         <div>
           <h4 className="flex items-center gap-2 text-sm font-semibold text-gray-700">
             <Brain className="w-4 h-4 text-sky-600" />
-            Predicted Outcomes
+            Likely Areas to Watch
           </h4>
           <p className="text-xs text-gray-500 mt-1">
-            Learned from patterns across existing school data and later outcome records such as CPOMS chronology.
+            Based on current signals across existing school systems and past recorded concerns where available.
           </p>
         </div>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-sky-100 text-sky-700">

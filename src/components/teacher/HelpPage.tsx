@@ -4,19 +4,27 @@ export default function HelpPage() {
   const faqs = [
     {
       q: 'What do the risk scores mean?',
-      a: 'Risk scores (0-100%) indicate how closely a pupil\'s current pattern resembles historical patterns that later led to negative outcomes or significant support needs. High risk (>75%) means a stronger pattern match and more urgent review. Medium (50-75%) means emerging concern. Low (<50%) means no strong current pattern match.',
+      a: 'Risk scores (0-100%) indicate how closely a pupil\'s current pattern resembles patterns that previously tended to lead to a later concern or additional support need. High risk (>75%) means a stronger pattern match and more urgent review. Medium (50-75%) means emerging concern. Low (<50%) means there is no strong current pattern match.',
     },
     {
-      q: 'How are predictions generated?',
-      a: 'Clinx combines attendance, behaviour, academic, wellbeing, and contextual signals from systems schools already use. The model learns from past data patterns and later outcomes, such as historical CPOMS chronology exports, to identify pupils whose current signals may suggest a future negative outcome without any extra data entry from teachers.',
+      q: 'How are insights generated?',
+      a: 'Clinx combines attendance, behaviour, academic, wellbeing, and contextual signals from systems your school already uses. It looks for patterns that have previously been followed by later concerns or additional support needs, without asking teachers to enter extra data.',
     },
     {
       q: 'What should I do when a pupil is flagged?',
       a: 'Review the pupil detail page for context, contributing signals, and predicted outcomes. Consider the suggested actions. Use professional judgement; Clinx provides decision support, not diagnoses. Acknowledge the alert so other staff know it has been seen, then follow normal pastoral or safeguarding processes.',
     },
     {
-      q: 'Where does the data come from?',
-      a: 'Clinx connects to your school\'s existing systems: Arbor MIS (attendance, SEND, FSM), Class Charts (behaviour and homework), and historical or batch-fed safeguarding chronology such as CPOMS exports. The aim is to work with data schools already collect rather than creating new forms or admin processes.',
+      q: 'What data is Clinx using?',
+      a: 'Clinx works from the systems your school already uses, such as attendance and pupil context from Arbor, behaviour and homework from Class Charts, and past concern context where available. The aim is to use existing school data rather than create another monitoring process.',
+    },
+    {
+      q: 'Who can see pupil names?',
+      a: 'Named pupils are shown only to authorised staff within your school. Clinx internal admins use ID-based views when supporting setup or account issues.',
+    },
+    {
+      q: 'Do we need a separate onboarding portal or daily upload?',
+      a: 'No. Clinx handles onboarding directly with your school. In day-to-day use, staff continue working in their usual systems and Clinx reflects those signals in one place.',
     },
     {
       q: 'Will this create extra workload for teachers?',

@@ -19,10 +19,31 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 const teacher1 = getTeacherById('T001');
 
 const DEMO_ACCOUNTS: DemoAccount[] = [
-  { email: 'admin@clinx.uk', password: 'demo', role: 'siteAdmin', name: 'Clinx Admin', teacherId: null },
-  { email: 'b.day@dedworth.school', password: 'demo', role: 'schoolAdmin', name: 'Mr Brad Day (Assistant Headteacher)', teacherId: null },
-  { email: 'dsl@dedworth.school', password: 'demo', role: 'schoolAdmin', name: 'Mr. P. Hargreaves (DSL)', teacherId: null },
-  { email: 't.smith@dedworth.school', password: 'demo', role: 'teacher', name: teacher1?.name || 'Mr. T. Smith', teacherId: 'T001' },
+  { email: 'admin@clinx.uk', password: 'demo', role: 'siteAdmin', name: 'Clinx Admin', teacherId: null, schoolId: null },
+  {
+    email: 'b.day@dedworth.school',
+    password: 'demo',
+    role: 'schoolAdmin',
+    name: 'Mr Brad Day (Assistant Headteacher)',
+    teacherId: null,
+    schoolId: 'school-dedworth',
+  },
+  {
+    email: 'dsl@dedworth.school',
+    password: 'demo',
+    role: 'schoolAdmin',
+    name: 'Mr. P. Hargreaves (DSL)',
+    teacherId: null,
+    schoolId: 'school-dedworth',
+  },
+  {
+    email: 't.smith@dedworth.school',
+    password: 'demo',
+    role: 'teacher',
+    name: teacher1?.name || 'Mr. T. Smith',
+    teacherId: 'T001',
+    schoolId: 'school-dedworth',
+  },
 ];
 
 export function AuthProvider({ children }: { children: ReactNode }) {

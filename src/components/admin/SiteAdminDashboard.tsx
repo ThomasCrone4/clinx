@@ -27,6 +27,12 @@ export default function SiteAdminDashboard() {
   const onboardingSchools = schools.filter((school) => school.status !== 'Active').length;
   const modelReadySchools = schools.filter((school) => school.onboarding.status === 'Ready').length;
   const totalPupils = schools.reduce((sum, school) => sum + school.pupils, 0);
+  const provisionedAdminUsers = schools.reduce((sum, school) => sum + school.onboarding.adminUsers.length, 0);
+  const schoolsWithLiveConnectors = schools.filter(
+    (school) =>
+      Boolean(school.onboarding.connectors.arborToken.trim()) ||
+      Boolean(school.onboarding.connectors.classChartsToken.trim()),
+  ).length;
 
   return (
     <div className="max-w-7xl space-y-6">
@@ -58,7 +64,7 @@ export default function SiteAdminDashboard() {
           { label: 'Live Schools', value: liveSchools, icon: Building2, color: 'text-emerald-600' },
           { label: 'Pupils In System', value: totalPupils, icon: Users, color: 'text-sky-600' },
           { label: 'Unread Alerts', value: unreadAlerts.length, icon: AlertTriangle, color: 'text-amber-600' },
-          { label: 'Average Risk Score', value: '23%', icon: BarChart3, color: 'text-violet-600' },
+          { label: 'Model-Ready Schools', value: modelReadySchools, icon: BarChart3, color: 'text-violet-600' },
         ].map((item) => (
           <div key={item.label} className="bg-white rounded-xl border border-gray-200 p-5">
             <div className="flex items-center justify-between mb-2">
@@ -130,8 +136,8 @@ export default function SiteAdminDashboard() {
               <span className="font-semibold text-gray-900">{onboardingSchools}</span>
             </div>
             <div className="flex items-center justify-between rounded-lg bg-slate-50 border border-slate-200 px-3 py-2">
-              <span>Internal admin actions today</span>
-              <span className="font-semibold text-gray-900">14</span>
+              <span>Provisioned admin users</span>
+              <span className="font-semibold text-gray-900">{provisionedAdminUsers}</span>
             </div>
           </div>
         </div>
@@ -145,8 +151,8 @@ export default function SiteAdminDashboard() {
           </h2>
           <div className="space-y-3">
             {[
-              { label: 'Prediction service uptime', value: '99.8%', tone: 'bg-emerald-100 text-emerald-700' },
-              { label: 'Connector sync health', value: 'Stable', tone: 'bg-sky-100 text-sky-700' },
+              { label: 'Schools with live connectors', value: `${schoolsWithLiveConnectors}`, tone: 'bg-sky-100 text-sky-700' },
+              { label: 'Historical training posture', value: 'CSV-first', tone: 'bg-violet-100 text-violet-700' },
               { label: 'Chronology label mapping', value: 'Monitoring', tone: 'bg-amber-100 text-amber-700' },
               { label: 'Alert routing engine', value: 'Healthy', tone: 'bg-emerald-100 text-emerald-700' },
             ].map((item) => (

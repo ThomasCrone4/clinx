@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { BellRing, CheckCircle, ShieldAlert, Database, Mail, CalendarClock } from 'lucide-react';
+import { BellRing, CheckCircle, ShieldAlert, Database, Mail, CalendarClock, Lock } from 'lucide-react';
 import { useToast } from '../common/Toast';
-import { getSourceData } from '../../services/dataService';
 
 const escalationRules = [
   {
@@ -26,7 +25,6 @@ const escalationRules = [
 
 export default function SettingsPage() {
   const { addToast } = useToast();
-  const sourceData = getSourceData();
   const [digestMode, setDigestMode] = useState('Daily digest');
   const [notifyByEmail, setNotifyByEmail] = useState(true);
   const [notifyInApp, setNotifyInApp] = useState(true);
@@ -36,21 +34,18 @@ export default function SettingsPage() {
   const integrationCards = [
     {
       name: 'Arbor MIS',
-      status: 'Healthy',
-      detail: `${sourceData.arbor.students.length} students, ${sourceData.arbor.attendance_marks.length} attendance marks`,
-      sync: sourceData.arbor.students[0]?.last_synced_at || '2026-03-28T08:00:00Z',
+      status: 'In use',
+      detail: 'Attendance, pupil context, timetables, form groups, and school profile information.',
     },
     {
       name: 'Class Charts',
-      status: 'Healthy',
-      detail: `${sourceData.classCharts.behaviour_events.length} behaviour events, ${sourceData.classCharts.homework_feed.length} homework records`,
-      sync: sourceData.classCharts.behaviour_events[0]?.logged_at || '2026-03-28T08:15:00Z',
+      status: 'In use',
+      detail: 'Behaviour, homework, and classroom context that help Clinx spot changes in routine and engagement.',
     },
     {
-      name: 'CPOMS',
-      status: 'Monitoring',
-      detail: `${sourceData.cpoms.concerns.length} historical concerns available for chronology matching and model validation`,
-      sync: sourceData.cpoms.concerns[0]?.created_at || '2026-03-28T08:20:00Z',
+      name: 'Pastoral history',
+      status: 'Where available',
+      detail: 'Past concern context can support review and pattern learning without creating a second pastoral workflow.',
     },
   ];
 
@@ -58,7 +53,7 @@ export default function SettingsPage() {
     <div className="max-w-5xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <p className="text-sm text-gray-500 mt-1">School configuration, notification preferences, and integration confidence</p>
+        <p className="text-sm text-gray-500 mt-1">School configuration, notifications, and visibility settings</p>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 p-5">
@@ -87,7 +82,7 @@ export default function SettingsPage() {
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-4">
             <BellRing className="w-4 h-4 text-sky-600" />
-            Worry Notifications
+            Concern Notifications
           </h3>
           <div className="space-y-4">
             <div>
@@ -181,34 +176,56 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-4">
-          <Database className="w-4 h-4 text-emerald-600" />
-          Integration Confidence
-        </h3>
-        <div className="grid grid-cols-3 gap-4">
-          {integrationCards.map((source) => (
-            <div key={source.name} className="rounded-xl border border-gray-200 p-4 bg-slate-50/50">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium text-gray-800">{source.name}</p>
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                  source.status === 'Healthy' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-                }`}>
-                  {source.status}
-                </span>
+      <div className="grid grid-cols-[1.25fr_0.95fr] gap-6">
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-4">
+            <Database className="w-4 h-4 text-emerald-600" />
+            Connected Systems
+          </h3>
+          <div className="grid grid-cols-3 gap-4">
+            {integrationCards.map((source) => (
+              <div key={source.name} className="rounded-xl border border-gray-200 p-4 bg-slate-50/50">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium text-gray-800">{source.name}</p>
+                  <span
+                    className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                      source.status === 'In use' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'
+                    }`}
+                  >
+                    {source.status}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600">{source.detail}</p>
               </div>
-              <p className="text-sm text-gray-600">{source.detail}</p>
-              <p className="text-xs text-gray-500 mt-3">Latest sync: {source.sync.replace('T', ' ').replace('Z', ' UTC')}</p>
-            </div>
-          ))}
+            ))}
+          </div>
+
+          <div className="mt-4 rounded-lg bg-sky-50 border border-sky-200 p-4">
+            <p className="text-sm text-sky-700">
+              Clinx handles setup directly with your school. This page is here to show leaders what is informing
+              school-wide insight, not ask staff to manage setup themselves.
+            </p>
+          </div>
         </div>
 
-        <div className="mt-4 rounded-lg bg-sky-50 border border-sky-200 p-4">
-          <p className="text-sm text-sky-700">
-            Clinx is currently simulating a realistic setup where historical CSV exports can train the model and live Arbor
-            or Class Charts feeds can support ongoing scoring. Safeguarding chronology is shown here as a historical or
-            batch-fed confidence source rather than a guaranteed live API feed.
-          </p>
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-4">
+            <Lock className="w-4 h-4 text-sky-600" />
+            Access & Visibility
+          </h3>
+          <div className="space-y-3">
+            {[
+              'Named pupils are visible only to authorised staff within your school.',
+              'Clinx internal admins use ID-based views when supporting setup or account issues.',
+              'Notifications can be routed by role so only relevant staff are interrupted.',
+              'Clinx is designed to work from data already held in school systems rather than extra teacher data entry.',
+            ].map((item) => (
+              <p key={item} className="flex items-start gap-2 text-sm text-gray-600">
+                <CheckCircle className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
+                <span>{item}</span>
+              </p>
+            ))}
+          </div>
         </div>
       </div>
     </div>

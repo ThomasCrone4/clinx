@@ -570,7 +570,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     persist(
       updateSchoolRecord(schools, schoolId, (school) => {
         const csvImports = school.onboarding.csvImports.map((file) =>
-          file.name === name ? { ...file, status: 'Imported' as const, note: 'Uploaded to onboarding workspace' } : file,
+          file.name === name ? { ...file, status: 'Imported' as const, note: 'Uploaded to Clinx onboarding handover' } : file,
         );
         const nextStatus = inferOnboardingStatus(school.onboarding.stage, school.onboarding.connectors, csvImports);
         return {

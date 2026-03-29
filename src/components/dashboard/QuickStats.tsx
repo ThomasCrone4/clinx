@@ -11,8 +11,8 @@ export default function QuickStats() {
   const items = [
     { label: 'Total Pupils', value: stats.total, icon: Users, color: 'text-sky-600' },
     { label: 'Avg Attendance', value: `${stats.avgAttendance}%`, icon: TrendingUp, color: 'text-emerald-600' },
-    { label: 'Predicted Early Alerts', value: activeAlerts, icon: AlertTriangle, color: 'text-amber-600' },
-    { label: 'Pupils Needing Review', value: pupilsNeedingReview, icon: Brain, color: 'text-violet-600' },
+    { label: 'Open Alerts', value: activeAlerts, icon: AlertTriangle, color: 'text-amber-600' },
+    { label: 'Flagged for Review', value: pupilsNeedingReview, icon: Brain, color: 'text-violet-600' },
   ];
 
   return (

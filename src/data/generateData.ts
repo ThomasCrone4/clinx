@@ -577,7 +577,7 @@ function generateAlerts(pupils: Pupil[], teachers: Teacher[], classes: SchoolCla
       pupilId: pupil.id,
       riskLevel: pupil.riskLevel,
       riskScore: pupil.riskScore,
-      reason: `Risk score increased to ${pupil.riskScore}% — ${pupil.aiExplanation.slice(0, 2).map(f => f.text).join(' + ')}`,
+      reason: `Pattern shift noted (${pupil.riskScore}%): ${pupil.aiExplanation.slice(0, 2).map((f) => f.text).join(' + ')}`,
       timestamp: date.toISOString(),
       status: i < 12 ? 'Unread' : i < 16 ? 'Acknowledged' : 'Dismissed',
       assignedTeachers,
@@ -591,7 +591,7 @@ function generateStaffNotes(pupils: Pupil[]): Record<string, StaffNote[]> {
   const notes: Record<string, StaffNote[]> = {};
   const noteTemplates = [
     'Spoke with pupil during break. Seemed quiet but engaged when asked about weekend.',
-    'Called home — no answer. Will try again tomorrow.',
+    'Called home - no answer. Will try again tomorrow.',
     'Pupil mentioned feeling overwhelmed with homework. Discussed prioritisation strategies.',
     'Met with parent. They confirmed family difficulties at home. Agreed to weekly check-ins.',
     'Pupil seemed more settled today. Participated well in group work.',
@@ -800,3 +800,4 @@ export function generateAllData(): GeneratedData {
 
   return { teachers, classes, pupils, alerts, staffNotes, periods, days, sourceData };
 }
+

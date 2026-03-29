@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Clock, Eye, Check, X } from 'lucide-react';
+import { Clock, Eye, Check, X, BellOff } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getPupilById } from '../../services/dataService';
 import RiskBadge from '../common/RiskBadge';
@@ -10,10 +10,19 @@ type AlertCardProps = {
   alert: Alert;
   onAcknowledge: (id: string) => void;
   onDismiss: (id: string) => void;
+  onRemindLater?: (id: string) => void;
+  reminderAt?: string;
   basePath?: RouteBasePath;
 };
 
-export default function AlertCard({ alert, onAcknowledge, onDismiss, basePath = '/dashboard' }: AlertCardProps) {
+export default function AlertCard({
+  alert,
+  onAcknowledge,
+  onDismiss,
+  onRemindLater,
+  reminderAt,
+  basePath = '/dashboard',
+}: AlertCardProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const pupil = getPupilById(alert.pupilId);
@@ -27,6 +36,9 @@ export default function AlertCard({ alert, onAcknowledge, onDismiss, basePath = 
   }
 
   const isAcknowledged = alert.status === 'Acknowledged';
+  const reminderLabel = reminderAt
+    ? new Date(reminderAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+    : null;
 
   return (
     <div className={`bg-white rounded-xl border border-gray-200 p-4 transition-opacity ${isAcknowledged ? 'opacity-60' : ''}`}>
@@ -40,6 +52,9 @@ export default function AlertCard({ alert, onAcknowledge, onDismiss, basePath = 
             </span>
             {isAcknowledged && (
               <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Acknowledged</span>
+            )}
+            {user?.role === 'teacher' && reminderLabel && (
+              <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Reminder set for {reminderLabel}</span>
             )}
           </div>
           <p className="text-sm text-gray-600 mb-2">{alert.reason}</p>
@@ -61,7 +76,15 @@ export default function AlertCard({ alert, onAcknowledge, onDismiss, basePath = 
               onClick={() => onAcknowledge(alert.id)}
               className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
             >
-              <Check className="w-3.5 h-3.5" /> Acknowledge
+              <Check className="w-3.5 h-3.5" /> {user?.role === 'teacher' ? 'Already Aware' : 'Acknowledge'}
+            </button>
+          )}
+          {user?.role === 'teacher' && alert.status !== 'Dismissed' && onRemindLater && (
+            <button
+              onClick={() => onRemindLater(alert.id)}
+              className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors"
+            >
+              <BellOff className="w-3.5 h-3.5" /> Remind Later
             </button>
           )}
           {alert.status !== 'Dismissed' && (

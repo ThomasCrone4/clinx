@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Shield, Zap, Bell, BarChart3, ArrowRight } from 'lucide-react';
 import { useToast } from '../common/Toast';
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { addToast } = useToast();
-  const [showDemoForm, setShowDemoForm] = useState(false);
   const [demoForm, setDemoForm] = useState({
     name: '',
     email: '',
@@ -16,6 +16,19 @@ export default function LandingPage() {
     systems: 'Arbor, Class Charts, CPOMS export',
     priorities: '',
   });
+  const showDemoForm = searchParams.get('request-demo') === '1';
+
+  function openDemoForm() {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('request-demo', '1');
+    setSearchParams(nextParams, { replace: true });
+  }
+
+  function closeDemoForm() {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('request-demo');
+    setSearchParams(nextParams, { replace: true });
+  }
 
   const features = [
     {
@@ -25,8 +38,8 @@ export default function LandingPage() {
     },
     {
       icon: BarChart3,
-      title: 'Predicts Future Negative Outcomes',
-      desc: 'Clinx learns from historical patterns in school data and later recorded outcomes, helping schools spot pupils who may need support earlier.',
+      title: 'Spots Emerging Concern Earlier',
+      desc: 'Clinx learns from historical patterns in school data and later recorded concerns, helping schools spot pupils who may need support sooner.',
     },
     {
       icon: Bell,
@@ -44,7 +57,7 @@ export default function LandingPage() {
         </div>
         <button
           onClick={() => navigate('/login')}
-          className="px-5 py-2 bg-sky-600 text-white rounded-lg font-medium hover:bg-sky-700 transition-colors"
+          className="px-5 py-2 bg-sky-600 text-white rounded-lg font-medium hover:bg-sky-700 hover:shadow-md"
         >
           Login
         </button>
@@ -52,14 +65,15 @@ export default function LandingPage() {
 
       <section className="max-w-4xl mx-auto text-center py-24 px-6">
         <h1 className="text-5xl font-bold text-gray-900 leading-tight mb-6">
-          Predict negative outcomes earlier from <span className="text-sky-600">data schools already hold</span>
+          Identify concerns earlier from
+          <span className="block text-sky-600 mt-2">data schools already hold</span>
         </h1>
         <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-10">
-          Clinx learns from past patterns across systems like Arbor, Class Charts, and CPOMS to help schools intervene
-          earlier, without asking staff to collect more data or maintain another monitoring system.
+          Clinx helps schools spot pupils who may need support sooner by learning from patterns across the systems
+          they already use.
         </p>
         <p className="text-sm text-gray-400 max-w-xl mx-auto -mt-5 mb-8">
-          Designed to help schools identify who may need support sooner, using data they already hold.
+          No new data collection. No second monitoring process. Earlier insight from existing school data.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3 mb-10">
           {[
@@ -77,14 +91,14 @@ export default function LandingPage() {
         </div>
         <div className="flex items-center justify-center gap-4">
           <button
-            onClick={() => setShowDemoForm(true)}
-            className="px-8 py-3 bg-sky-600 text-white rounded-lg font-semibold text-lg hover:bg-sky-700 transition-colors flex items-center gap-2"
+            onClick={openDemoForm}
+            className="px-8 py-3 bg-sky-600 text-white rounded-lg font-semibold text-lg hover:bg-sky-700 hover:shadow-lg flex items-center gap-2"
           >
             Request a Demo <ArrowRight className="w-5 h-5" />
           </button>
           <button
             onClick={() => navigate('/login')}
-            className="px-8 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold text-lg hover:bg-gray-50 transition-colors"
+            className="px-8 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold text-lg hover:bg-gray-50 hover:shadow-md"
           >
             Login
           </button>
@@ -95,8 +109,8 @@ export default function LandingPage() {
         <div className="max-w-3xl mx-auto text-center mb-12">
           <h2 className="text-2xl font-bold text-gray-900">Why schools care</h2>
           <p className="text-gray-500 mt-3">
-            Clinx is designed to recognise patterns already present across a school&apos;s existing systems, then surface
-            pupils who may be heading toward a negative outcome so staff can step in sooner.
+            Clinx is designed to surface the pupils, classes, and year groups most likely to need attention next,
+            using patterns already present across a school&apos;s existing systems.
           </p>
         </div>
         <div className="grid grid-cols-3 gap-8">
@@ -117,7 +131,7 @@ export default function LandingPage() {
           </div>
           <div className="rounded-xl border border-gray-200 bg-white p-6">
             <p className="text-sm font-semibold text-gray-900">Pattern learning</p>
-            <p className="text-sm text-gray-500 mt-2">The model learns which combinations of signals tended to appear before later negative outcomes in historical data.</p>
+            <p className="text-sm text-gray-500 mt-2">The model learns which combinations of signals tended to appear before concerns in historical data.</p>
           </div>
             <div className="rounded-xl border border-gray-200 bg-white p-6">
               <p className="text-sm font-semibold text-gray-900">School action</p>
@@ -126,17 +140,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <footer className="border-t border-gray-100 py-8">
-        <div className="max-w-5xl mx-auto px-6 flex items-center justify-between text-sm text-gray-400">
-          <span>(c) 2026 Clinx. All rights reserved.</span>
-          <div className="flex gap-6">
-            <a href="#" className="hover:text-gray-600">Privacy Policy</a>
-            <a href="#" className="hover:text-gray-600">Terms of Service</a>
-            <a href="#" className="hover:text-gray-600">Contact</a>
-          </div>
-        </div>
-      </footer>
-
       {showDemoForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-6">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6">
@@ -144,10 +147,10 @@ export default function LandingPage() {
               <div>
                 <h3 className="text-xl font-semibold text-gray-900">Request a Demo</h3>
                 <p className="text-sm text-gray-500 mt-1">
-                  Tell us a little about your school and current systems so we can tailor the demo.
+                  Tell us a little about your school and current systems so we can tailor the demo and handle next steps directly with you.
                 </p>
               </div>
-              <button onClick={() => setShowDemoForm(false)} className="text-sm text-gray-400 hover:text-gray-600">
+              <button onClick={closeDemoForm} className="text-sm text-gray-400 hover:text-gray-600">
                 Close
               </button>
             </div>
@@ -156,7 +159,7 @@ export default function LandingPage() {
               onSubmit={(event) => {
                 event.preventDefault();
                 addToast("Demo request received! We'll be in touch.", 'success');
-                setShowDemoForm(false);
+                closeDemoForm();
                 setDemoForm({
                   name: '',
                   email: '',
@@ -245,14 +248,13 @@ export default function LandingPage() {
               </div>
 
               <div className="rounded-lg bg-sky-50 border border-sky-200 p-4 text-sm text-sky-800">
-                We can tailor the demo around your current systems, your likely onboarding route, and whether you want to
-                see historical training, live MIS scoring, or a phased hybrid rollout.
+                This form is enough for your school to get started. Clinx can handle demo follow-up, discovery, and onboarding directly with your team without a separate onboarding portal.
               </div>
 
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setShowDemoForm(false)}
+                  onClick={closeDemoForm}
                   className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg"
                 >
                   Cancel

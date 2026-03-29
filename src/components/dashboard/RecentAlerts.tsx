@@ -29,9 +29,9 @@ export default function RecentAlerts({ basePath = '/dashboard' }: RecentAlertsPr
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <h3 className="text-sm font-semibold text-gray-700 mb-4">Recent Alerts</h3>
+      <h3 className="text-sm font-semibold text-gray-700 mb-4">Highest Priority Alerts</h3>
       <div className="space-y-3">
-        {alerts.length === 0 && <p className="text-sm text-gray-400">No active alerts</p>}
+        {alerts.length === 0 && <p className="text-sm text-gray-400">No pupils are currently flagged for review</p>}
         {alerts.map(alert => (
           (() => {
             const pupil = getPupilById(alert.pupilId);

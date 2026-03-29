@@ -19,23 +19,23 @@ export default function SignalConfidencePanel({ pupil }: SignalConfidencePanelPr
     {
       label: 'Arbor MIS',
       icon: Database,
-      metric: `${arborMarks.length} attendance marks`,
-      detail: `${pupil.attendance}% attendance, SEND ${pupil.send}`,
-      status: 'Healthy',
+      metric: `${arborMarks.length} recent attendance marks and pupil context available`,
+      detail: `${pupil.attendance}% attendance, ${pupil.send === 'None' ? 'no recorded SEND' : `SEND ${pupil.send}`}`,
+      status: 'Current signal',
     },
     {
       label: 'Class Charts',
       icon: Activity,
-      metric: `${classChartsEvents.length} behaviour/homework records`,
+      metric: `${classChartsEvents.length} behaviour and homework updates available`,
       detail: `${pupil.behaviourIncidents} behaviour incidents, homework ${pupil.homeworkPct}%`,
-      status: classChartsEvents.length > 0 ? 'Healthy' : 'Monitoring',
+      status: classChartsEvents.length > 0 ? 'Current signal' : 'Limited signal',
     },
     {
-      label: 'CPOMS',
+      label: 'Past concern context',
       icon: FileWarning,
-      metric: `${cpomsConcerns.length} historical concerns`,
-      detail: cpomsConcerns[0]?.category || 'No historical chronology linked',
-      status: cpomsConcerns.length > 0 ? 'Historical label available' : 'No linked history',
+      metric: cpomsConcerns.length > 0 ? `${cpomsConcerns.length} past records linked` : 'No past concern context linked',
+      detail: cpomsConcerns[0]?.category || 'Clinx can still surface current patterns without this.',
+      status: cpomsConcerns.length > 0 ? 'Historical context' : 'Optional context',
     },
   ];
 
@@ -70,8 +70,8 @@ export default function SignalConfidencePanel({ pupil }: SignalConfidencePanelPr
       <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 p-3">
         <p className="text-xs font-medium text-amber-800 mb-1">How this score should be used</p>
         <p className="text-sm text-amber-700">
-          Clinx is surfacing a likely future concern based on patterns that previously led to negative outcomes. Staff
-          should combine this with professional judgement, existing pastoral knowledge, and any recent safeguarding chronology.
+          Clinx is surfacing a likely area of concern based on patterns seen before in school data. Staff should
+          combine this with professional judgement, existing pastoral knowledge, and any recent safeguarding context.
         </p>
       </div>
     </div>

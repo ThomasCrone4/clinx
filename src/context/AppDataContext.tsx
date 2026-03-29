@@ -1,25 +1,41 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { getAllAlerts as getBaseAlerts, getNotesForPupil as getBaseNotesForPupil } from '../services/dataService';
-import type { Alert, AlertStatus, StaffNote, TeacherActionStatus } from '../types/domain';
+import type { Alert, AlertStatus, StaffNote, TeacherActionStatus, TeacherAlertPreferences } from '../types/domain';
 
 type AppDataContextValue = {
   alerts: Alert[];
   unreadAlerts: Alert[];
   teacherActions: Record<string, TeacherActionStatus>;
+  deferredAlerts: Record<string, string>;
+  getTeacherAlertPreferences: (teacherId: string | null | undefined) => TeacherAlertPreferences;
   getNotesForPupil: (pupilId: string) => StaffNote[];
   acknowledgeAlert: (id: string) => void;
   dismissAlert: (id: string) => void;
+  remindLater: (id: string) => void;
   addNoteForPupil: (pupilId: string, author: string, text: string) => void;
   setTeacherAction: (pupilId: string, status: TeacherActionStatus) => void;
+  updateTeacherAlertPreferences: (
+    teacherId: string | null | undefined,
+    updates: Partial<TeacherAlertPreferences>,
+  ) => void;
 };
 
 const AppDataContext = createContext<AppDataContextValue | null>(null);
+
+const DEFAULT_TEACHER_ALERT_PREFERENCES: TeacherAlertPreferences = {
+  delivery: 'Immediate',
+  inApp: true,
+  emailDigest: false,
+  highPriorityOnly: false,
+};
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
   const [alertOverrides, setAlertOverrides] = useState<Record<string, AlertStatus>>({});
   const [noteOverrides, setNoteOverrides] = useState<Record<string, StaffNote[]>>({});
   const [teacherActions, setTeacherActions] = useState<Record<string, TeacherActionStatus>>({});
+  const [teacherAlertPreferences, setTeacherAlertPreferences] = useState<Record<string, TeacherAlertPreferences>>({});
+  const [deferredAlerts, setDeferredAlerts] = useState<Record<string, string>>({});
 
   const alerts = useMemo(
     () =>
@@ -38,6 +54,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   function dismissAlert(id: string) {
     setAlertOverrides((prev) => ({ ...prev, [id]: 'Dismissed' }));
+  }
+
+  function remindLater(id: string) {
+    const reminderAt = new Date();
+    reminderAt.setDate(reminderAt.getDate() + 1);
+    setDeferredAlerts((prev) => ({
+      ...prev,
+      [id]: reminderAt.toISOString(),
+    }));
   }
 
   function getNotesForPupil(pupilId: string): StaffNote[] {
@@ -68,17 +93,46 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }));
   }
 
+  function getTeacherAlertPreferences(teacherId: string | null | undefined): TeacherAlertPreferences {
+    if (!teacherId) {
+      return DEFAULT_TEACHER_ALERT_PREFERENCES;
+    }
+
+    return teacherAlertPreferences[teacherId] ?? DEFAULT_TEACHER_ALERT_PREFERENCES;
+  }
+
+  function updateTeacherAlertPreferences(
+    teacherId: string | null | undefined,
+    updates: Partial<TeacherAlertPreferences>,
+  ) {
+    if (!teacherId) {
+      return;
+    }
+
+    setTeacherAlertPreferences((prev) => ({
+      ...prev,
+      [teacherId]: {
+        ...(prev[teacherId] ?? DEFAULT_TEACHER_ALERT_PREFERENCES),
+        ...updates,
+      },
+    }));
+  }
+
   return (
     <AppDataContext.Provider
       value={{
         alerts,
         unreadAlerts,
         teacherActions,
+        deferredAlerts,
+        getTeacherAlertPreferences,
         getNotesForPupil,
         acknowledgeAlert,
         dismissAlert,
+        remindLater,
         addNoteForPupil,
         setTeacherAction,
+        updateTeacherAlertPreferences,
       }}
     >
       {children}

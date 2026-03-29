@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import {
   Building2,
   Brain,
@@ -149,7 +149,7 @@ export default function OnboardingHub() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Onboarding Hub</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Track school rollout from discovery through data mapping, historical training, and go-live readiness.
+            Track hybrid rollout between Clinx and school leads, from discovery through integrations, historical training, and go-live readiness.
           </p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-6">
@@ -167,7 +167,7 @@ export default function OnboardingHub() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Onboarding Hub</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Track school rollout from discovery through data mapping, historical training, and go-live readiness.
+          Track hybrid rollout between Clinx and school leads, from discovery through integrations, historical training, and go-live readiness.
         </p>
       </div>
 
@@ -231,7 +231,7 @@ export default function OnboardingHub() {
           <div>
             <h2 className="text-lg font-semibold text-gray-900">Tracking Notes</h2>
             <p className="text-sm text-gray-500 mt-1">
-              Quick internal tracking for onboarding progress, blockers, and next actions.
+              Quick working notes for onboarding progress, blockers, and next actions across Clinx and the school.
             </p>
           </div>
           <button
@@ -314,7 +314,7 @@ export default function OnboardingHub() {
             <div>
               <h2 className="text-xl font-semibold text-gray-900">{selectedSchool.name}</h2>
               <p className="text-sm text-gray-500 mt-1">
-                {selectedSchool.onboarding.stage} · Owned by {selectedSchool.onboarding.owner}
+                {selectedSchool.onboarding.stage} - Owned by {selectedSchool.onboarding.owner}
               </p>
             </div>
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">
@@ -336,6 +336,13 @@ export default function OnboardingHub() {
               <p className="text-sm font-semibold text-gray-900 mt-2">{selectedSchool.onboarding.nextMilestone}</p>
             </div>
           </div>
+        </div>
+
+        <div className="rounded-xl border border-sky-200 bg-sky-50 p-5">
+          <p className="text-sm text-sky-800">
+            Schools do not need a separate onboarding portal. Clinx handles onboarding directly through demo follow-up,
+            kickoff, and the named school contacts tracked below.
+          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -442,7 +449,7 @@ export default function OnboardingHub() {
                   value={adminForm.name}
                   onChange={(event) => setAdminForm((prev) => ({ ...prev, name: event.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 outline-none"
-                  placeholder="Mrs. J. Whitfield"
+                  placeholder="School leader or DSL"
                 />
               </div>
               <div>
@@ -524,8 +531,7 @@ export default function OnboardingHub() {
             <div className="space-y-3 text-sm text-gray-600">
               <p className="flex items-start gap-2">
                 <FileSpreadsheet className="w-4 h-4 text-sky-600 mt-0.5 shrink-0" />
-                Use historical exports to train the first model safely before asking the school to rely on live
-                predictions.
+                Start with historical exports to train the first model safely before moving into live scoring.
               </p>
               <p className="flex items-start gap-2">
                 <ShieldCheck className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
@@ -534,7 +540,7 @@ export default function OnboardingHub() {
               </p>
               <p className="flex items-start gap-2">
                 <Clock3 className="w-4 h-4 text-violet-600 mt-0.5 shrink-0" />
-                Launch with a small cohort first, then widen once staff confidence and outcome tracking look healthy.
+                Use a hybrid rollout: let Clinx handle the technical setup while school leads confirm routing, users, and launch readiness.
               </p>
             </div>
           </div>
@@ -561,3 +567,4 @@ export default function OnboardingHub() {
     </div>
   );
 }
+

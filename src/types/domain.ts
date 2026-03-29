@@ -5,6 +5,7 @@ export type BehaviourSeverity = 'Minor' | 'Moderate' | 'Major';
 export type AttendanceSession = 'Present' | 'Late' | 'Absent';
 export type AlertStatus = 'Unread' | 'Acknowledged' | 'Dismissed';
 export type TeacherActionStatus = 'New' | 'Acknowledged' | 'Monitoring' | 'Follow Up Planned';
+export type TeacherAlertDelivery = 'Immediate' | 'Daily Digest';
 export type SendStatus = 'None' | 'SEN Support' | 'EHCP';
 export type HomeworkTrend = 'Declining' | 'Stable' | 'Improving';
 export type RouteBasePath = '/dashboard' | '/teacher';
@@ -17,6 +18,7 @@ export type DemoAccount = {
   role: UserRole;
   name: string;
   teacherId: string | null;
+  schoolId: string | null;
 };
 
 export type RiskBreakdown = {
@@ -143,6 +145,19 @@ export type StaffNote = {
   timestamp: string;
   author: string;
   text: string;
+};
+
+export type TeacherAlertPreferences = {
+  delivery: TeacherAlertDelivery;
+  inApp: boolean;
+  emailDigest: boolean;
+  highPriorityOnly: boolean;
+};
+
+export type GuidedTourStep = {
+  path: string;
+  title: string;
+  description: string;
 };
 
 export type Period = {

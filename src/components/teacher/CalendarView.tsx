@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   ChevronLeft,
   ChevronRight,
@@ -11,23 +11,31 @@ import {
   CheckCircle2,
   Eye,
   ClipboardList,
+  BellRing,
+  Mail,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { getTeacherById, getClassById, getPupilsByIds, getPeriods, getDays } from '../../services/dataService';
 import { useAuth } from '../../context/AuthContext';
 import { useAppData } from '../../context/AppDataContext';
+import { useToast } from '../common/Toast';
 import RiskBadge from '../common/RiskBadge';
-import type { TeacherActionStatus } from '../../types/domain';
+import type { TeacherActionStatus, TeacherAlertDelivery, TeacherAlertPreferences } from '../../types/domain';
 import { getPupilPrimaryLabel } from '../../utils/pupilDisplay';
 
 export default function CalendarView() {
   const { user } = useAuth();
-  const { teacherActions, setTeacherAction } = useAppData();
+  const { teacherActions, setTeacherAction, getTeacherAlertPreferences, updateTeacherAlertPreferences } = useAppData();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { addToast } = useToast();
   const [weekOffset, setWeekOffset] = useState(0);
+  const alertPreferencesRef = useRef<HTMLDivElement | null>(null);
 
   const teacher = getTeacherById(user?.teacherId);
   const periods = getPeriods();
   const days = getDays();
+  const alertPreferences = getTeacherAlertPreferences(user?.teacherId);
 
   const classRiskMap = useMemo(() => {
     const map: Record<string, { high: number; medium: number }> = {};
@@ -102,6 +110,18 @@ export default function CalendarView() {
   const monitoringCount = priorityQueue.filter((item) => item.status === 'Monitoring').length;
 
   const actionOptions: TeacherActionStatus[] = ['Acknowledged', 'Monitoring', 'Follow Up Planned'];
+  const deliveryOptions: TeacherAlertDelivery[] = ['Immediate', 'Daily Digest'];
+
+  useEffect(() => {
+    if (location.hash === '#alert-preferences' && alertPreferencesRef.current) {
+      alertPreferencesRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [location.hash]);
+
+  function saveTeacherAlertPreference(updates: Partial<TeacherAlertPreferences>) {
+    updateTeacherAlertPreferences(user?.teacherId, updates);
+    addToast('Alert preferences saved', 'success');
+  }
 
   if (!teacher) {
     return <p className="text-gray-500">Teacher data not available</p>;
@@ -120,7 +140,7 @@ export default function CalendarView() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">My Classes</h1>
-          <p className="text-sm text-gray-500 mt-1">{teacher.name} · {teacher.subjects.join(', ')}</p>
+          <p className="text-sm text-gray-500 mt-1">{teacher.name} - {teacher.subjects.join(', ')}</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -254,7 +274,7 @@ export default function CalendarView() {
                           >
                             <div className="min-w-0">
                               <p className="text-sm font-semibold text-sky-900 truncate">{slot.className}</p>
-                              <p className="text-xs text-sky-700 truncate">{slot.subject} · {slot.room}</p>
+                              <p className="text-xs text-sky-700 truncate">{slot.subject} - {slot.room}</p>
                             </div>
                             <div className="min-w-0">
                               {risks.high > 0 || risks.medium > 0 ? (
@@ -288,6 +308,88 @@ export default function CalendarView() {
         </div>
 
         <div className="space-y-4">
+          <div ref={alertPreferencesRef} id="alert-preferences" className="bg-white rounded-2xl border border-gray-200 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">My Alert Preferences</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Choose the alert style that suits how you work, without adding extra admin.
+                </p>
+              </div>
+              <SlidersHorizontal className="w-5 h-5 text-sky-600" />
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
+                  Delivery Timing
+                </label>
+                <div className="flex bg-slate-100 rounded-lg p-1">
+                  {deliveryOptions.map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => saveTeacherAlertPreference({ delivery: option })}
+                      className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                        alertPreferences.delivery === option ? 'bg-white text-sky-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  {
+                    label: 'Show in-app alerts',
+                    description: 'See concerns inside Clinx while working through your classes.',
+                    checked: alertPreferences.inApp,
+                    icon: BellRing,
+                    onChange: (checked: boolean) => saveTeacherAlertPreference({ inApp: checked }),
+                  },
+                  {
+                    label: 'Email me a summary',
+                    description: 'Receive a low-noise summary rather than relying only on the app.',
+                    checked: alertPreferences.emailDigest,
+                    icon: Mail,
+                    onChange: (checked: boolean) => saveTeacherAlertPreference({ emailDigest: checked }),
+                  },
+                  {
+                    label: 'Only notify me about high-priority concerns',
+                    description: 'Keep Clinx focused on the pupils most likely to need your attention first.',
+                    checked: alertPreferences.highPriorityOnly,
+                    icon: AlertTriangle,
+                    onChange: (checked: boolean) => saveTeacherAlertPreference({ highPriorityOnly: checked }),
+                  },
+                ].map((item) => (
+                  <label key={item.label} className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={item.checked}
+                      onChange={(event) => item.onChange(event.target.checked)}
+                      className="mt-0.5 w-4 h-4 text-sky-600 rounded border-gray-300 focus:ring-sky-500"
+                    />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <item.icon className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm font-medium text-gray-800">{item.label}</span>
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1">{item.description}</p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+
+              <div className="rounded-xl bg-sky-50 border border-sky-200 p-4">
+                <p className="text-sm text-sky-800">
+                  These preferences only affect how Clinx reaches you. School-wide routing and escalation rules remain
+                  managed by school leaders.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-white rounded-2xl border border-gray-200 p-5">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -306,7 +408,7 @@ export default function CalendarView() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-gray-900">{getPupilPrimaryLabel(pupil, user)}</p>
-                      <p className="text-xs text-gray-500 mt-1">Year {pupil.year} · Form {pupil.form}</p>
+                      <p className="text-xs text-gray-500 mt-1">Year {pupil.year} - Form {pupil.form}</p>
                     </div>
                     <RiskBadge level={pupil.riskLevel} score={pupil.riskScore} />
                   </div>

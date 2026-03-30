@@ -13,7 +13,7 @@ export default function LandingPage() {
     role: 'School leader',
     school: '',
     pupils: '600',
-    systems: 'Arbor, Class Charts, CPOMS export',
+    systems: 'Arbor, Class Charts, CPOMS',
     priorities: '',
   });
   const showDemoForm = searchParams.get('request-demo') === '1';
@@ -44,7 +44,7 @@ export default function LandingPage() {
     {
       icon: Bell,
       title: 'Adds Little Extra Workload',
-      desc: 'Targeted alerts and suggested next steps are routed to the right staff, so teachers can act without duplicating work already happening elsewhere.',
+      desc: 'Targeted alerts help staff notice likely concern earlier, without duplicating work already happening elsewhere.',
     },
   ];
 
@@ -71,9 +71,6 @@ export default function LandingPage() {
         <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-10">
           Clinx helps schools spot pupils who may need support sooner by learning from patterns across the systems
           they already use.
-        </p>
-        <p className="text-sm text-gray-400 max-w-xl mx-auto -mt-5 mb-8">
-          No new data collection. No second monitoring process. Earlier insight from existing school data.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3 mb-10">
           {[
@@ -135,7 +132,7 @@ export default function LandingPage() {
           </div>
             <div className="rounded-xl border border-gray-200 bg-white p-6">
               <p className="text-sm font-semibold text-gray-900">School action</p>
-            <p className="text-sm text-gray-500 mt-2">Staff see early warning, likely outcomes, and suggested low-burden next steps without duplicate data entry.</p>
+              <p className="text-sm text-gray-500 mt-2">Staff see early warning, likely outcomes, and supporting context without duplicate data entry.</p>
           </div>
         </div>
       </section>
@@ -166,7 +163,7 @@ export default function LandingPage() {
                   role: 'School leader',
                   school: '',
                   pupils: '600',
-                  systems: 'Arbor, Class Charts, CPOMS export',
+                  systems: 'Arbor, Class Charts, CPOMS',
                   priorities: '',
                 });
               }}
@@ -232,7 +229,7 @@ export default function LandingPage() {
                     value={demoForm.systems}
                     onChange={(event) => setDemoForm((prev) => ({ ...prev, systems: event.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 outline-none"
-                    placeholder="Arbor, Class Charts, CPOMS export"
+                    placeholder="Arbor, Class Charts, CPOMS"
                   />
                 </div>
               </div>
@@ -243,12 +240,12 @@ export default function LandingPage() {
                   value={demoForm.priorities}
                   onChange={(event) => setDemoForm((prev) => ({ ...prev, priorities: event.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 outline-none min-h-28"
-                  placeholder="For example: safeguarding prediction, attendance intervention, workload reduction, onboarding and integrations..."
+                  placeholder="For example: safeguarding prediction, attendance intervention, workload reduction, data sources, and integrations..."
                 />
               </div>
 
               <div className="rounded-lg bg-sky-50 border border-sky-200 p-4 text-sm text-sky-800">
-                This form is enough for your school to get started. Clinx can handle demo follow-up, discovery, and onboarding directly with your team without a separate onboarding portal.
+                This form is enough for your school to get started. Clinx can handle demo follow-up, discovery, and onboarding directly with your team.
               </div>
 
               <div className="flex justify-end gap-2">

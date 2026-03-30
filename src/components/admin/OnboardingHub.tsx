@@ -1,4 +1,5 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { FormEvent } from 'react';
 import {
   Building2,
   Brain,
@@ -6,6 +7,8 @@ import {
   CheckCircle2,
   ChevronDown,
   Clock3,
+  Eye,
+  EyeOff,
   FileSpreadsheet,
   KeyRound,
   ShieldCheck,
@@ -15,6 +18,7 @@ import {
 import {
   useAdminData,
   type OnboardingStage,
+  type OnboardingTrackingType,
   type SchoolConnectorSettings,
 } from '../../context/AdminDataContext';
 import { useToast } from '../common/Toast';
@@ -36,7 +40,7 @@ export default function OnboardingHub() {
     schools,
     getSchoolById,
     updateOnboardingStage,
-    updateTrackingNotes,
+    addTrackingUpdate,
     updateConnectors,
     markCsvImportDone,
     addProvisionedAdminUser,
@@ -50,6 +54,8 @@ export default function OnboardingHub() {
   const initialSchoolId = onboardingSchools[0]?.id ?? '';
   const [selectedId, setSelectedId] = useState(initialSchoolId);
   const [showSchoolMenu, setShowSchoolMenu] = useState(false);
+  const [showArborToken, setShowArborToken] = useState(false);
+  const [showClassChartsToken, setShowClassChartsToken] = useState(false);
   const [connectorForm, setConnectorForm] = useState<SchoolConnectorSettings>({
     arborToken: '',
     classChartsToken: '',
@@ -57,7 +63,8 @@ export default function OnboardingHub() {
   });
   const [adminForm, setAdminForm] = useState<AdminForm>(emptyAdminForm);
   const [stageOverride, setStageOverride] = useState<OnboardingStage>('Discovery');
-  const [trackingNotes, setTrackingNotes] = useState('');
+  const [trackingType, setTrackingType] = useState<OnboardingTrackingType>('Update');
+  const [trackingNote, setTrackingNote] = useState('');
 
   useEffect(() => {
     if (!onboardingSchools.length) {
@@ -71,23 +78,10 @@ export default function OnboardingHub() {
 
   const selectedSchool = getSchoolById(selectedId) ?? onboardingSchools[0];
   const completeCount = selectedSchool?.onboarding.checklist.filter((item) => item.complete).length ?? 0;
-
-  useEffect(() => {
-    if (!selectedSchool) {
-      return;
-    }
-
-    setConnectorForm(selectedSchool.onboarding.connectors);
-    setAdminForm(emptyAdminForm);
-    setStageOverride(selectedSchool.onboarding.stage);
-    setTrackingNotes(selectedSchool.onboarding.trackingNotes);
-  }, [selectedSchool]);
-
   const readyToLaunch = useMemo(
     () => onboardingSchools.filter((school) => school.onboarding.status === 'Ready').length,
     [onboardingSchools],
   );
-
   const integrationWorkstreams = useMemo(
     () =>
       onboardingSchools.filter(
@@ -98,20 +92,43 @@ export default function OnboardingHub() {
       ).length,
     [onboardingSchools],
   );
+  const needsInputCount = useMemo(
+    () => onboardingSchools.filter((school) => school.onboarding.status === 'Needs Input').length,
+    [onboardingSchools],
+  );
+  const trackingUpdates = useMemo(
+    () =>
+      [...(selectedSchool?.onboarding.trackingUpdates ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    [selectedSchool],
+  );
+
+  useEffect(() => {
+    if (!selectedSchool) {
+      return;
+    }
+
+    setConnectorForm(selectedSchool.onboarding.connectors);
+    setAdminForm(emptyAdminForm);
+    setStageOverride(selectedSchool.onboarding.stage);
+    setTrackingType('Update');
+    setTrackingNote('');
+    setShowArborToken(false);
+    setShowClassChartsToken(false);
+  }, [selectedSchool]);
 
   function selectSchool(id: string) {
     setSelectedId(id);
     setShowSchoolMenu(false);
   }
 
-  function saveConnectors(event: React.FormEvent<HTMLFormElement>) {
+  function saveConnectors(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selectedSchool) return;
     updateConnectors(selectedSchool.id, connectorForm);
     addToast(`Connector settings saved for ${selectedSchool.name}`, 'success');
   }
 
-  function addAdminUser(event: React.FormEvent<HTMLFormElement>) {
+  function addAdminUser(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selectedSchool) return;
     if (!adminForm.name.trim() || !adminForm.email.trim()) {
@@ -130,17 +147,43 @@ export default function OnboardingHub() {
 
   function saveTrackingUpdate() {
     if (!selectedSchool) return;
-    updateTrackingNotes(selectedSchool.id, trackingNotes);
+    if (!trackingNote.trim()) {
+      addToast('Add a note so the onboarding history stays clear', 'warning');
+      return;
+    }
+
+    addTrackingUpdate(selectedSchool.id, {
+      stage: stageOverride,
+      type: trackingType,
+      text: trackingNote.trim(),
+    });
+
     if (stageOverride !== selectedSchool.onboarding.stage) {
       updateOnboardingStage(selectedSchool.id, stageOverride);
     }
-    addToast(`Tracking notes saved for ${selectedSchool.name}`, 'success');
+
+    setTrackingType('Update');
+    setTrackingNote('');
+    addToast(`Onboarding note added for ${selectedSchool.name}`, 'success');
   }
 
   function statusClasses(status: string): string {
     if (status === 'Ready') return 'bg-emerald-100 text-emerald-700';
     if (status === 'Needs Input') return 'bg-amber-100 text-amber-700';
     return 'bg-sky-100 text-sky-700';
+  }
+
+  function stageClasses(stage: OnboardingStage): string {
+    if (stage === 'Discovery') return 'bg-slate-100 text-slate-700';
+    if (stage === 'Integration Setup') return 'bg-sky-100 text-sky-700';
+    if (stage === 'Historical Training') return 'bg-violet-100 text-violet-700';
+    return 'bg-emerald-100 text-emerald-700';
+  }
+
+  function trackingTypeClasses(type: OnboardingTrackingType): string {
+    if (type === 'Blocker') return 'bg-rose-100 text-rose-700';
+    if (type === 'Next Step') return 'bg-amber-100 text-amber-700';
+    return 'bg-slate-100 text-slate-700';
   }
 
   if (!selectedSchool) {
@@ -171,9 +214,53 @@ export default function OnboardingHub() {
         </p>
       </div>
 
+      <div className="grid grid-cols-4 gap-4">
+        {[
+          {
+            label: 'Schools In Onboarding',
+            value: onboardingSchools.length,
+            icon: Building2,
+            tone: 'text-sky-700',
+            bg: 'bg-sky-50 border-sky-200',
+          },
+          {
+            label: 'Integration Workstreams',
+            value: integrationWorkstreams,
+            icon: Cable,
+            tone: 'text-emerald-700',
+            bg: 'bg-emerald-50 border-emerald-200',
+          },
+          {
+            label: 'Awaiting Input',
+            value: needsInputCount,
+            icon: Brain,
+            tone: 'text-rose-700',
+            bg: 'bg-rose-50 border-rose-200',
+          },
+          {
+            label: 'Ready To Launch',
+            value: readyToLaunch,
+            icon: CheckCircle2,
+            tone: 'text-amber-700',
+            bg: 'bg-amber-50 border-amber-200',
+          },
+        ].map((item) => (
+          <div key={item.label} className={`rounded-xl border p-4 ${item.bg}`}>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{item.label}</p>
+              <item.icon className={`w-4 h-4 ${item.tone}`} />
+            </div>
+            <p className={`text-3xl font-bold mt-3 ${item.tone}`}>{item.value}</p>
+          </div>
+        ))}
+      </div>
+
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Selected School</label>
+          <div className="mb-3">
+            <h2 className="text-lg font-semibold text-gray-900">Select School</h2>
+            <p className="text-sm text-gray-500 mt-1">Choose which onboarding record to review or update.</p>
+          </div>
           <button
             type="button"
             onClick={() => setShowSchoolMenu((value) => !value)}
@@ -226,88 +313,6 @@ export default function OnboardingHub() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <div className="flex items-start justify-between gap-6 mb-4">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">Tracking Notes</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Quick working notes for onboarding progress, blockers, and next actions across Clinx and the school.
-            </p>
-          </div>
-          <button
-            onClick={saveTrackingUpdate}
-            className="px-4 py-2 bg-sky-600 text-white text-sm rounded-lg font-medium hover:bg-sky-700"
-          >
-            Save Tracking Update
-          </button>
-        </div>
-        <div className="grid grid-cols-[280px_1fr] gap-4 items-start">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Mark Onboarding Stage</label>
-            <select
-              value={stageOverride}
-              onChange={(event) => setStageOverride(event.target.value as OnboardingStage)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 outline-none"
-            >
-              <option>Discovery</option>
-              <option>Integration Setup</option>
-              <option>Historical Training</option>
-              <option>Go-Live Readiness</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-            <textarea
-              value={trackingNotes}
-              onChange={(event) => setTrackingNotes(event.target.value)}
-              className="w-full min-h-28 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 outline-none"
-              placeholder="Add rollout notes, blockers, school requests, or internal handover context..."
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-4 gap-4">
-        {[
-          {
-            label: 'Schools In Flight',
-            value: onboardingSchools.length,
-            icon: Building2,
-            tone: 'text-sky-700',
-            bg: 'bg-sky-50 border-sky-200',
-          },
-          {
-            label: 'Integration Workstreams',
-            value: integrationWorkstreams,
-            icon: Cable,
-            tone: 'text-emerald-700',
-            bg: 'bg-emerald-50 border-emerald-200',
-          },
-          {
-            label: 'Training Pipelines',
-            value: onboardingSchools.filter((school) => school.status === 'Training').length,
-            icon: Brain,
-            tone: 'text-violet-700',
-            bg: 'bg-violet-50 border-violet-200',
-          },
-          {
-            label: 'Ready To Launch',
-            value: readyToLaunch,
-            icon: CheckCircle2,
-            tone: 'text-amber-700',
-            bg: 'bg-amber-50 border-amber-200',
-          },
-        ].map((item) => (
-          <div key={item.label} className={`rounded-xl border p-4 ${item.bg}`}>
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{item.label}</p>
-              <item.icon className={`w-4 h-4 ${item.tone}`} />
-            </div>
-            <p className={`text-3xl font-bold mt-3 ${item.tone}`}>{item.value}</p>
-          </div>
-        ))}
-      </div>
-
       <div className="space-y-4">
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <div className="flex items-start justify-between gap-4">
@@ -345,6 +350,93 @@ export default function OnboardingHub() {
           </p>
         </div>
 
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="flex items-start justify-between gap-6 mb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Onboarding Stage Notes</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Add a new update, blocker, or next step. Previous notes stay in the timeline as a locked record.
+              </p>
+            </div>
+            <button
+              onClick={saveTrackingUpdate}
+              className="px-4 py-2 bg-sky-600 text-white text-sm rounded-lg font-medium hover:bg-sky-700"
+            >
+              Add Update
+            </button>
+          </div>
+
+          <div className="grid grid-cols-[320px_1fr] gap-4 items-start">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Onboarding Stage</label>
+                <select
+                  value={stageOverride}
+                  onChange={(event) => setStageOverride(event.target.value as OnboardingStage)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 outline-none"
+                >
+                  <option>Discovery</option>
+                  <option>Integration Setup</option>
+                  <option>Historical Training</option>
+                  <option>Go-Live Readiness</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Note Type</label>
+                <select
+                  value={trackingType}
+                  onChange={(event) => setTrackingType(event.target.value as OnboardingTrackingType)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 outline-none"
+                >
+                  <option>Update</option>
+                  <option>Blocker</option>
+                  <option>Next Step</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Add New Note</label>
+                <textarea
+                  value={trackingNote}
+                  onChange={(event) => setTrackingNote(event.target.value)}
+                  className="w-full min-h-32 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 outline-none"
+                  placeholder="Add rollout notes, blockers, school requests, or internal handover context..."
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3 mb-3">
+                <p className="text-sm text-slate-700">Timeline entries are stored in order and cannot be removed from this mock.</p>
+              </div>
+              <div className="space-y-3">
+                {trackingUpdates.map((note) => (
+                  <div key={note.id} className="rounded-xl border border-gray-200 p-4">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${stageClasses(note.stage)}`}>
+                        {note.stage}
+                      </span>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${trackingTypeClasses(note.type)}`}>
+                        {note.type}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {new Date(note.createdAt).toLocaleDateString('en-GB', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                        })}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700 mt-3">{note.text}</p>
+                    <p className="text-xs text-gray-400 mt-3">Added by {note.author}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
@@ -354,26 +446,48 @@ export default function OnboardingHub() {
             <form onSubmit={saveConnectors} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Arbor API Token</label>
-                <input
-                  type="text"
-                  value={connectorForm.arborToken}
-                  onChange={(event) => setConnectorForm((prev) => ({ ...prev, arborToken: event.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 outline-none"
-                  placeholder="Paste Arbor token"
-                />
+                <div className="relative">
+                  <input
+                    type={showArborToken ? 'text' : 'password'}
+                    value={connectorForm.arborToken}
+                    onChange={(event) => setConnectorForm((prev) => ({ ...prev, arborToken: event.target.value }))}
+                    className="w-full px-3 py-2 pr-11 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 outline-none"
+                    placeholder="Paste Arbor token"
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowArborToken((value) => !value)}
+                    className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                  >
+                    {showArborToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Class Charts Token</label>
-                <input
-                  type="text"
-                  value={connectorForm.classChartsToken}
-                  onChange={(event) =>
-                    setConnectorForm((prev) => ({ ...prev, classChartsToken: event.target.value }))
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 outline-none"
-                  placeholder="Paste Class Charts token"
-                />
+                <div className="relative">
+                  <input
+                    type={showClassChartsToken ? 'text' : 'password'}
+                    value={connectorForm.classChartsToken}
+                    onChange={(event) =>
+                      setConnectorForm((prev) => ({ ...prev, classChartsToken: event.target.value }))
+                    }
+                    className="w-full px-3 py-2 pr-11 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 outline-none"
+                    placeholder="Paste Class Charts token"
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowClassChartsToken((value) => !value)}
+                    className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                  >
+                    {showClassChartsToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">CPOMS Route</label>
                 <input
@@ -567,4 +681,3 @@ export default function OnboardingHub() {
     </div>
   );
 }
-

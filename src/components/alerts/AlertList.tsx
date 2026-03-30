@@ -20,7 +20,11 @@ export default function AlertList({ basePath = '/dashboard' }: AlertListProps) {
   const [filter, setFilter] = useState<AlertStatus | 'All'>('Unread');
   const [sortBy, setSortBy] = useState<AlertSortMode>('risk');
   const [, forceUpdate] = useState(0);
-  const filterOptions: Array<AlertStatus | 'All'> = ['Unread', 'Acknowledged', 'All'];
+  const filterOptions: Array<{ label: string; value: AlertStatus | 'All' }> = [
+    { label: 'Unread', value: 'Unread' },
+    { label: 'Seen', value: 'Acknowledged' },
+    { label: 'All', value: 'All' },
+  ];
   const sortOptions: Array<{ key: AlertSortMode; label: string }> = [
     { key: 'risk', label: 'Highest Risk' },
     { key: 'newest', label: 'Newest' },
@@ -62,7 +66,7 @@ export default function AlertList({ basePath = '/dashboard' }: AlertListProps) {
           <div>
             <p className="text-sm font-semibold text-sky-900">Alert settings can be adjusted in Settings</p>
             <p className="text-sm text-sky-800 mt-1">
-              School-wide notification routing, digests, and escalation rules are managed from the settings page.
+              School-wide alert defaults and leadership visibility are managed from the settings page.
             </p>
           </div>
           <Link
@@ -95,15 +99,15 @@ export default function AlertList({ basePath = '/dashboard' }: AlertListProps) {
 
       <div className="flex items-center gap-3">
         <div className="flex bg-white rounded-lg border border-gray-200 p-0.5">
-          {filterOptions.map(f => (
+          {filterOptions.map((option) => (
             <button
-              key={f}
-              onClick={() => setFilter(f)}
+              key={option.value}
+              onClick={() => setFilter(option.value)}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                filter === f ? 'bg-sky-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+                filter === option.value ? 'bg-sky-600 text-white' : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              {f}
+              {option.label}
             </button>
           ))}
         </div>

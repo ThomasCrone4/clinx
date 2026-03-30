@@ -1,7 +1,7 @@
 import RiskSummaryCards from './RiskSummaryCards';
 import QuickStats from './QuickStats';
 import AttendanceChart from './AttendanceChart';
-import RecentAlerts from './RecentAlerts';
+import HomeworkCompletionChart from './HomeworkCompletionChart';
 import CohortInsightsPanel from './CohortInsightsPanel';
 
 export default function SchoolAdminDashboard() {
@@ -22,9 +22,9 @@ export default function SchoolAdminDashboard() {
       <QuickStats />
       <RiskSummaryCards />
       <CohortInsightsPanel />
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid gap-6 xl:grid-cols-2">
         <AttendanceChart />
-        <RecentAlerts />
+        <HomeworkCompletionChart />
       </div>
     </div>
   );

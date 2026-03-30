@@ -33,28 +33,29 @@ export default function ClassDetail({
         <ArrowLeft className="w-4 h-4" /> {backLabel}
       </button>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <div className="grid grid-cols-4 gap-4 text-sm">
-          <div>
-            <p className="text-gray-400 text-xs">Class</p>
-            <p className="font-semibold text-gray-900">{cls.name}</p>
+      <PupilTable
+        basePath={basePath}
+        pupils={pupils}
+        title={cls.name}
+        description={null}
+        headerContent={
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Teacher</p>
+              <p className="mt-1 text-sm font-semibold text-gray-900">{cls.teacherName}</p>
+            </div>
+            <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Room</p>
+              <p className="mt-1 text-sm font-semibold text-gray-900">{cls.room}</p>
+            </div>
+            <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Class Size</p>
+              <p className="mt-1 text-sm font-semibold text-gray-900">{`${pupils.length} pupils in this class`}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-gray-400 text-xs">Subject</p>
-            <p className="font-medium text-gray-700">{cls.subject}</p>
-          </div>
-          <div>
-            <p className="text-gray-400 text-xs">Teacher</p>
-            <p className="font-medium text-gray-700">{cls.teacherName}</p>
-          </div>
-          <div>
-            <p className="text-gray-400 text-xs">Room</p>
-            <p className="font-medium text-gray-700">{cls.room}</p>
-          </div>
-        </div>
-      </div>
-
-      <PupilTable basePath={basePath} pupils={pupils} />
+        }
+        hideYearFilter
+      />
     </div>
   );
 }

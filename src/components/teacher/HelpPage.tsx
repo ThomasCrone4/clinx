@@ -12,7 +12,7 @@ export default function HelpPage() {
     },
     {
       q: 'What should I do when a pupil is flagged?',
-      a: 'Review the pupil detail page for context, contributing signals, and predicted outcomes. Consider the suggested actions. Use professional judgement; Clinx provides decision support, not diagnoses. Acknowledge the alert so other staff know it has been seen, then follow normal pastoral or safeguarding processes.',
+      a: 'Review the pupil detail page for context, contributing signals, and predicted outcomes. Use professional judgement; Clinx provides decision support, not diagnoses. Mark the alert as seen once you have reviewed it, then follow your normal pastoral or safeguarding processes.',
     },
     {
       q: 'What data is Clinx using?',

@@ -172,6 +172,13 @@ export type AttendanceMonthlyPoint = {
   attendance: number;
 };
 
+export type SchoolSignalsMonthlyPoint = {
+  month: string;
+  highRiskPupils: number;
+  incidents: number;
+  homeworkCompletion: number;
+};
+
 export type ArborStudentRecord = {
   student_id: string;
   student_number: string;

@@ -64,7 +64,7 @@ function AppRoutes() {
         <Route path="/dashboard/staff" element={<StaffManagement />} />
         <Route path="/dashboard/staff/:id" element={<TeacherProfile />} />
         <Route path="/dashboard/data-sources" element={<DataSourcesPage />} />
-        <Route path="/dashboard/trust" element={<TrustPage />} />
+        <Route path="/dashboard/trust" element={<Navigate to="/dashboard/data-sources" replace />} />
         <Route
           path="/dashboard/staff/:teacherId/class/:id"
           element={<ClassDetail basePath="/dashboard" backPath="/dashboard/staff" backLabel="Back to Staff" />}
@@ -79,7 +79,7 @@ function AppRoutes() {
         <Route path="/teacher/pupils/:id" element={<PupilDetail />} />
         <Route path="/teacher/alerts" element={<AlertList basePath="/teacher" />} />
         <Route path="/teacher/help" element={<HelpPage />} />
-        <Route path="/teacher/trust" element={<TrustPage />} />
+        <Route path="/teacher/trust" element={<Navigate to="/teacher/help" replace />} />
       </Route>
     </Routes>
   );

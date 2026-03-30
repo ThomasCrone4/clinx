@@ -8,9 +8,6 @@ import {
   BookOpen,
   ArrowRight,
   Clock3,
-  CheckCircle2,
-  Eye,
-  ClipboardList,
   BellRing,
   Mail,
   SlidersHorizontal,
@@ -20,12 +17,78 @@ import { useAuth } from '../../context/AuthContext';
 import { useAppData } from '../../context/AppDataContext';
 import { useToast } from '../common/Toast';
 import RiskBadge from '../common/RiskBadge';
-import type { TeacherActionStatus, TeacherAlertDelivery, TeacherAlertPreferences } from '../../types/domain';
+import type { Period, SchoolDay, TeacherAlertDelivery, TeacherAlertPreferences } from '../../types/domain';
 import { getPupilPrimaryLabel } from '../../utils/pupilDisplay';
+
+function startOfWeek(date: Date): Date {
+  const start = new Date(date);
+  const day = start.getDay();
+  const offset = day === 0 ? -6 : 1 - day;
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() + offset);
+  return start;
+}
+
+function addDays(date: Date, days: number): Date {
+  const nextDate = new Date(date);
+  nextDate.setDate(nextDate.getDate() + days);
+  return nextDate;
+}
+
+function parseTimeToMinutes(time: string): number {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
+function getCurrentSchoolDay(date: Date): SchoolDay | null {
+  const dayMap: Record<number, SchoolDay> = {
+    1: 'Monday',
+    2: 'Tuesday',
+    3: 'Wednesday',
+    4: 'Thursday',
+    5: 'Friday',
+  };
+
+  return dayMap[date.getDay()] ?? null;
+}
+
+function getCurrentPeriodId(date: Date, periods: Period[]): number | null {
+  const currentMinutes = date.getHours() * 60 + date.getMinutes();
+  const activePeriod = periods.find((period) => {
+    const start = parseTimeToMinutes(period.start);
+    const end = parseTimeToMinutes(period.end);
+    return currentMinutes >= start && currentMinutes < end;
+  });
+
+  return activePeriod?.id ?? null;
+}
+
+function getAttendanceSnapshot(baseAttendance: number, weekOffset: number) {
+  if (weekOffset > 0) {
+    return {
+      value: 'Pending',
+      detail: 'No attendance yet',
+      tone: 'text-slate-700',
+      bg: 'bg-slate-50 border-slate-200',
+    };
+  }
+
+  const adjustedAttendance = Math.max(
+    86,
+    Math.min(99, Math.round((baseAttendance + weekOffset * 0.7 + Math.sin(weekOffset * 1.4) * 0.4) * 10) / 10),
+  );
+
+  return {
+    value: `${adjustedAttendance}%`,
+    detail: weekOffset === 0 ? 'Current week view' : 'Historical snapshot',
+    tone: 'text-emerald-700',
+    bg: 'bg-emerald-50 border-emerald-200',
+  };
+}
 
 export default function CalendarView() {
   const { user } = useAuth();
-  const { teacherActions, setTeacherAction, getTeacherAlertPreferences, updateTeacherAlertPreferences } = useAppData();
+  const { getTeacherAlertPreferences, updateTeacherAlertPreferences } = useAppData();
   const navigate = useNavigate();
   const location = useLocation();
   const { addToast } = useToast();
@@ -36,6 +99,13 @@ export default function CalendarView() {
   const periods = getPeriods();
   const days = getDays();
   const alertPreferences = getTeacherAlertPreferences(user?.teacherId);
+  const now = new Date();
+  const currentWeekStart = startOfWeek(now);
+  const baseDate = addDays(currentWeekStart, weekOffset * 7);
+  const weekDates = days.map((_, index) => addDays(baseDate, index));
+  const isCurrentWeek = weekOffset === 0;
+  const currentSchoolDay = isCurrentWeek ? getCurrentSchoolDay(now) : null;
+  const currentPeriodId = isCurrentWeek ? getCurrentPeriodId(now, periods) : null;
 
   const classRiskMap = useMemo(() => {
     const map: Record<string, { high: number; medium: number }> = {};
@@ -102,15 +172,26 @@ export default function CalendarView() {
     .sort((a, b) => b.high * 2 + b.medium - (a.high * 2 + a.medium))
     .slice(0, 3);
 
-  const priorityQueue = topPriorityPupils.map((pupil) => ({
-    pupil,
-    status: teacherActions[pupil.id] || 'New',
-  }));
-  const followUpCount = priorityQueue.filter((item) => item.status === 'Follow Up Planned').length;
-  const monitoringCount = priorityQueue.filter((item) => item.status === 'Monitoring').length;
-
-  const actionOptions: TeacherActionStatus[] = ['Acknowledged', 'Monitoring', 'Follow Up Planned'];
   const deliveryOptions: TeacherAlertDelivery[] = ['Immediate', 'Daily Digest'];
+  const attendanceSnapshot = getAttendanceSnapshot(averageAttendance, weekOffset);
+  const weekLabel = `Week of ${baseDate.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })}`;
+  const liveWeekMessage =
+    weekOffset > 0
+      ? 'No attendance yet - this week has not happened yet.'
+      : weekOffset < 0
+        ? 'Showing a previous week. Attendance and timetable context are historical.'
+        : currentSchoolDay && currentPeriodId
+          ? `Live now: ${currentSchoolDay}, ${now.toLocaleDateString('en-GB', {
+              day: 'numeric',
+              month: 'short',
+            })}, Period ${currentPeriodId}.`
+          : currentSchoolDay
+            ? `Today is ${currentSchoolDay}. You are outside scheduled lesson time right now.`
+            : 'This is the current week, but today is outside the Monday to Friday timetable.';
 
   useEffect(() => {
     if (location.hash === '#alert-preferences' && alertPreferencesRef.current) {
@@ -126,14 +207,6 @@ export default function CalendarView() {
   if (!teacher) {
     return <p className="text-gray-500">Teacher data not available</p>;
   }
-
-  const baseDate = new Date('2026-03-23');
-  baseDate.setDate(baseDate.getDate() + weekOffset * 7);
-  const weekLabel = `Week of ${baseDate.toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })}`;
 
   return (
     <div className="space-y-4 max-w-7xl">
@@ -151,7 +224,11 @@ export default function CalendarView() {
           </button>
           <button
             onClick={() => setWeekOffset(0)}
-            className="px-3 py-2 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50"
+            className={`px-3 py-2 text-sm font-medium border rounded-lg ${
+              weekOffset === 0
+                ? 'border-sky-300 bg-sky-50 text-sky-700'
+                : 'border-gray-300 hover:bg-gray-50 text-gray-700'
+            }`}
           >
             Current Week
           </button>
@@ -170,6 +247,7 @@ export default function CalendarView() {
           {
             label: 'Pupils Taught',
             value: taughtPupils.length,
+            detail: 'Across your current timetable',
             icon: BookOpen,
             tone: 'text-sky-700',
             bg: 'bg-sky-50 border-sky-200',
@@ -177,6 +255,7 @@ export default function CalendarView() {
           {
             label: 'High Risk Pupils',
             value: highRiskCount,
+            detail: 'Current pattern match',
             icon: AlertTriangle,
             tone: 'text-red-700',
             bg: 'bg-red-50 border-red-200',
@@ -184,16 +263,18 @@ export default function CalendarView() {
           {
             label: 'Medium Risk Pupils',
             value: mediumRiskCount,
+            detail: 'Emerging concern',
             icon: Brain,
             tone: 'text-amber-700',
             bg: 'bg-amber-50 border-amber-200',
           },
           {
-            label: 'Avg Attendance',
-            value: `${averageAttendance}%`,
+            label: 'Week Attendance',
+            value: attendanceSnapshot.value,
+            detail: attendanceSnapshot.detail,
             icon: Clock3,
-            tone: 'text-emerald-700',
-            bg: 'bg-emerald-50 border-emerald-200',
+            tone: attendanceSnapshot.tone,
+            bg: attendanceSnapshot.bg,
           },
         ].map((item) => (
           <div key={item.label} className={`rounded-2xl border p-4 ${item.bg}`}>
@@ -202,6 +283,7 @@ export default function CalendarView() {
               <item.icon className={`w-4 h-4 ${item.tone}`} />
             </div>
             <p className={`text-3xl font-bold mt-3 ${item.tone}`}>{item.value}</p>
+            <p className="text-xs text-gray-500 mt-2">{item.detail}</p>
           </div>
         ))}
       </div>
@@ -229,81 +311,161 @@ export default function CalendarView() {
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+            <div className="px-5 py-4 border-b border-gray-100 flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">Weekly Timetable</h2>
                 <p className="text-sm text-gray-500 mt-1">Class risk indicators are shown directly in each lesson slot.</p>
               </div>
+              <div
+                className={`rounded-full px-3 py-1.5 text-xs font-medium ${
+                  weekOffset > 0
+                    ? 'bg-slate-100 text-slate-700'
+                    : weekOffset < 0
+                      ? 'bg-amber-50 text-amber-700'
+                      : 'bg-sky-50 text-sky-700'
+                }`}
+              >
+                {liveWeekMessage}
+              </div>
             </div>
+
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="w-24 px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-left">Time</th>
-                  {days.map((day) => (
-                    <th key={day} className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-left">
-                      {day}
-                    </th>
-                  ))}
+                  {days.map((day, dayIndex) => {
+                    const isTodayColumn = isCurrentWeek && currentSchoolDay === day;
+                    return (
+                      <th
+                        key={day}
+                        className={`px-4 py-3 text-xs font-semibold uppercase text-left ${
+                          isTodayColumn ? 'bg-sky-50 text-sky-700' : 'text-gray-500'
+                        }`}
+                      >
+                        <div>{day}</div>
+                        <div className={`text-[11px] mt-1 normal-case ${isTodayColumn ? 'text-sky-600' : 'text-gray-400'}`}>
+                          {weekDates[dayIndex].toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                        </div>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {periods.map((period, periodIndex) => (
-                  <tr key={period.id}>
-                    <td className="px-4 py-1 text-xs text-gray-400 align-top pt-3">
-                      <div className="font-medium">{period.label}</div>
-                      <div>
-                        {period.start}-{period.end}
-                      </div>
-                    </td>
-                    {days.map((day) => {
-                      const slot = teacher.timetable[day]?.[periodIndex];
-                      if (!slot) {
+                {periods.map((period, periodIndex) => {
+                  const isCurrentPeriodRow = isCurrentWeek && currentPeriodId === period.id;
+                  return (
+                    <tr key={period.id}>
+                      <td
+                        className={`px-4 py-1 text-xs text-gray-400 align-top pt-3 ${
+                          isCurrentPeriodRow ? 'bg-sky-50/70' : ''
+                        }`}
+                      >
+                        <div className="font-medium">{period.label}</div>
+                        <div>
+                          {period.start}-{period.end}
+                        </div>
+                      </td>
+                      {days.map((day) => {
+                        const slot = teacher.timetable[day]?.[periodIndex];
+                        const isCurrentSlot = isCurrentWeek && currentSchoolDay === day && currentPeriodId === period.id;
+
+                        if (!slot) {
+                          return (
+                            <td key={day} className="px-2 py-1">
+                              <div
+                                className={`h-20 rounded-lg ${
+                                  isCurrentSlot ? 'bg-sky-50 border border-dashed border-sky-200' : 'bg-gray-50/70'
+                                }`}
+                              />
+                            </td>
+                          );
+                        }
+
+                        const risks = classRiskMap[slot.classId] || { high: 0, medium: 0 };
                         return (
                           <td key={day} className="px-2 py-1">
-                            <div className="h-20 rounded-lg bg-gray-50/70" />
-                          </td>
-                        );
-                      }
-
-                      const risks = classRiskMap[slot.classId] || { high: 0, medium: 0 };
-                      return (
-                        <td key={day} className="px-2 py-1">
-                          <button
-                            onClick={() => navigate(`/teacher/class/${slot.classId}`)}
-                            className="w-full h-20 bg-sky-50 border border-sky-200 rounded-xl px-3 py-2 text-left hover:bg-sky-100 hover:border-sky-300 transition-colors flex flex-col justify-between overflow-hidden"
-                          >
-                            <div className="min-w-0">
-                              <p className="text-sm font-semibold text-sky-900 truncate">{slot.className}</p>
-                              <p className="text-xs text-sky-700 truncate">{slot.subject} - {slot.room}</p>
-                            </div>
-                            <div className="min-w-0">
-                              {risks.high > 0 || risks.medium > 0 ? (
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  {risks.high > 0 && (
-                                    <span className="text-[11px] leading-none bg-red-100 text-red-700 px-1.5 py-1 rounded-full font-medium">
-                                      H {risks.high}
-                                    </span>
-                                  )}
-                                  {risks.medium > 0 && (
-                                    <span className="text-[11px] leading-none bg-amber-100 text-amber-700 px-1.5 py-1 rounded-full font-medium">
-                                      M {risks.medium}
+                            <button
+                              onClick={() => navigate(`/teacher/class/${slot.classId}`)}
+                              className={`w-full h-20 rounded-xl px-3 py-2 text-left transition-colors flex flex-col justify-between overflow-hidden ${
+                                isCurrentSlot
+                                  ? 'bg-sky-100 border-2 border-sky-400 shadow-sm'
+                                  : 'bg-sky-50 border border-sky-200 hover:bg-sky-100 hover:border-sky-300'
+                              }`}
+                            >
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-semibold text-sky-900 truncate">{slot.className}</p>
+                                  {isCurrentSlot && (
+                                    <span className="text-[10px] leading-none bg-sky-600 text-white px-1.5 py-1 rounded-full font-semibold">
+                                      Now
                                     </span>
                                   )}
                                 </div>
-                              ) : (
-                                <span className="text-[11px] leading-none bg-emerald-100 text-emerald-700 px-1.5 py-1 rounded-full font-medium inline-flex">
-                                  Stable
-                                </span>
-                              )}
-                            </div>
-                          </button>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
+                                <p className="text-xs text-sky-700 truncate">{slot.subject} - {slot.room}</p>
+                              </div>
+                              <div className="min-w-0">
+                                {weekOffset > 0 ? (
+                                  <span className="text-[11px] leading-none bg-slate-100 text-slate-700 px-1.5 py-1 rounded-full font-medium inline-flex">
+                                    Upcoming
+                                  </span>
+                                ) : risks.high > 0 || risks.medium > 0 ? (
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    {risks.high > 0 && (
+                                      <span className="text-[11px] leading-none bg-red-100 text-red-700 px-1.5 py-1 rounded-full font-medium">
+                                        H {risks.high}
+                                      </span>
+                                    )}
+                                    {risks.medium > 0 && (
+                                      <span className="text-[11px] leading-none bg-amber-100 text-amber-700 px-1.5 py-1 rounded-full font-medium">
+                                        M {risks.medium}
+                                      </span>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-[11px] leading-none bg-emerald-100 text-emerald-700 px-1.5 py-1 rounded-full font-medium inline-flex">
+                                    Stable
+                                  </span>
+                                )}
+                              </div>
+                            </button>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-200 p-5">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Classes to Watch</h2>
+            <div className="space-y-3">
+              {atRiskClasses.map((schoolClass) => (
+                <button
+                  key={schoolClass.id}
+                  onClick={() => navigate(`/teacher/class/${schoolClass.id}`)}
+                  className="w-full text-left rounded-xl bg-slate-50 border border-slate-200 p-4 hover:bg-slate-100 transition-colors"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{schoolClass.name}</p>
+                      <p className="text-xs text-gray-500 mt-1">{schoolClass.subject}</p>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-gray-400" />
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
+                      High {schoolClass.high}
+                    </span>
+                    <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                      Medium {schoolClass.medium}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -383,8 +545,7 @@ export default function CalendarView() {
 
               <div className="rounded-xl bg-sky-50 border border-sky-200 p-4">
                 <p className="text-sm text-sky-800">
-                  These preferences only affect how Clinx reaches you. School-wide routing and escalation rules remain
-                  managed by school leaders.
+                  These preferences only affect how Clinx reaches you. School-wide alert defaults remain managed by school leaders.
                 </p>
               </div>
             </div>
@@ -419,110 +580,6 @@ export default function CalendarView() {
                     <span>Attendance {pupil.attendance}%</span>
                     <span>Behaviour {pupil.behaviourIncidents}</span>
                     <span>Homework {pupil.homeworkPct}%</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-gray-200 p-5">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">Action Queue</h2>
-                <p className="text-sm text-gray-500 mt-1">
-                  Lightweight next steps for the pupils most likely to need your attention.
-                </p>
-              </div>
-              <ClipboardList className="w-5 h-5 text-sky-600" />
-            </div>
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <div className="rounded-xl bg-amber-50 border border-amber-200 p-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Monitoring</p>
-                <p className="text-2xl font-bold text-amber-900 mt-2">{monitoringCount}</p>
-              </div>
-              <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Follow Up Planned</p>
-                <p className="text-2xl font-bold text-emerald-900 mt-2">{followUpCount}</p>
-              </div>
-            </div>
-            <div className="space-y-3">
-              {priorityQueue.slice(0, 4).map(({ pupil, status }) => (
-                <div key={pupil.id} className="rounded-xl border border-gray-200 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{getPupilPrimaryLabel(pupil, user)}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {pupil.aiExplanation[0]?.text || 'Pattern shift detected across existing school systems.'}
-                      </p>
-                    </div>
-                    <span
-                      className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                        status === 'Follow Up Planned'
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : status === 'Monitoring'
-                            ? 'bg-amber-100 text-amber-700'
-                            : status === 'Acknowledged'
-                              ? 'bg-sky-100 text-sky-700'
-                              : 'bg-slate-100 text-slate-600'
-                      }`}
-                    >
-                      {status}
-                    </span>
-                  </div>
-                  <div className="flex gap-2 mt-3 flex-wrap">
-                    {actionOptions.map((option) => (
-                      <button
-                        key={option}
-                        onClick={() => setTeacherAction(pupil.id, option)}
-                        className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                          status === option ? 'bg-sky-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                      >
-                        {option}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                      Low admin overhead
-                    </span>
-                    <button
-                      onClick={() => navigate(`/teacher/pupils/${pupil.id}`)}
-                      className="flex items-center gap-1 text-sky-700 hover:text-sky-800 font-medium"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      View pupil
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-gray-200 p-5">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Classes to Watch</h2>
-            <div className="space-y-3">
-              {atRiskClasses.map((schoolClass) => (
-                <button
-                  key={schoolClass.id}
-                  onClick={() => navigate(`/teacher/class/${schoolClass.id}`)}
-                  className="w-full text-left rounded-xl bg-slate-50 border border-slate-200 p-4 hover:bg-slate-100 transition-colors"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{schoolClass.name}</p>
-                      <p className="text-xs text-gray-500 mt-1">{schoolClass.subject}</p>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-gray-400" />
-                  </div>
-                  <div className="flex gap-2 mt-3">
-                    <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
-                      High {schoolClass.high}
-                    </span>
-                    <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
-                      Medium {schoolClass.medium}
-                    </span>
                   </div>
                 </button>
               ))}

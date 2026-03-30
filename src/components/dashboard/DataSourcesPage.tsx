@@ -1,4 +1,4 @@
-import { Database, CheckCircle2, ShieldCheck, Lock, Workflow } from 'lucide-react';
+import { Database, CheckCircle2, ShieldCheck, Lock, Workflow, Eye, Users } from 'lucide-react';
 
 const sourceCards = [
   {
@@ -50,7 +50,21 @@ const noExtraWorkItems = [
 const accessItems = [
   'Named pupils are visible only to authorised staff within your school.',
   'Clinx internal admins work from ID-based views when supporting setup or account issues.',
-  'Alerts can be routed by role, so the right staff see the right concerns.',
+  'Alerts are shown by role, so the right staff see the right concerns.',
+  'The school stays the operational owner of its pastoral and safeguarding decisions.',
+];
+
+const trustItems = [
+  {
+    icon: Users,
+    title: 'School ownership stays local',
+    body: 'Clinx helps staff see patterns earlier, but it does not replace professional judgement or existing school processes.',
+  },
+  {
+    icon: Eye,
+    title: 'Insight should be explainable',
+    body: 'Predictions are shown alongside visible signals and context so staff can understand why a pupil has been surfaced.',
+  },
 ];
 
 const rolloutSteps = [
@@ -63,10 +77,9 @@ export default function DataSourcesPage() {
   return (
     <div className="max-w-6xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Your Data in Clinx</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Your Data</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Clinx brings together the signals your school already holds so leaders can see patterns earlier without
-          asking staff to maintain another monitoring process.
+          How Clinx uses existing school data, who can see what, and the principles behind access and visibility in the platform.
         </p>
       </div>
 
@@ -92,7 +105,7 @@ export default function DataSourcesPage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-[1.25fr_1fr] gap-6">
+      <div className="grid grid-cols-[1.15fr_0.85fr] gap-6">
         <div className="space-y-6">
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <h2 className="text-lg font-semibold text-gray-900">What Clinx uses from existing systems</h2>
@@ -112,7 +125,7 @@ export default function DataSourcesPage() {
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900">
               <Lock className="w-5 h-5 text-sky-600" />
-              Access and visibility
+              Access, Privacy and Visibility
             </h2>
             <div className="space-y-3 mt-4">
               {accessItems.map((item) => (
@@ -139,6 +152,21 @@ export default function DataSourcesPage() {
           </div>
 
           <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <h2 className="text-lg font-semibold text-gray-900">Trust and judgement in practice</h2>
+            <div className="space-y-4 mt-4">
+              {trustItems.map((item) => (
+                <div key={item.title} className="rounded-xl border border-gray-200 bg-slate-50/60 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <item.icon className="w-4 h-4 text-sky-600" />
+                    <p className="text-sm font-semibold text-gray-900">{item.title}</p>
+                  </div>
+                  <p className="text-sm text-gray-600">{item.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
             <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900">
               <Workflow className="w-5 h-5 text-sky-600" />
               How rollout usually works
@@ -153,13 +181,6 @@ export default function DataSourcesPage() {
                 </div>
               ))}
             </div>
-          </div>
-
-          <div className="bg-sky-50 rounded-xl border border-sky-200 p-5">
-            <p className="text-sm text-sky-800">
-              In this demo, Clinx is showing the kind of joined-up picture school staff would see. Setup is handled
-              directly with your school by Clinx.
-            </p>
           </div>
         </div>
       </div>

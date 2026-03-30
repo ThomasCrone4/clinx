@@ -90,8 +90,6 @@ export default function StaffManagement() {
 
   const activeCount = staff.filter((member) => member.status === 'Active').length;
   const syncedCount = staff.filter((member) => member.source === 'Synced').length;
-  const manualCount = staff.filter((member) => member.source === 'Manual').length;
-
   function openAddModal() {
     setEditingId(null);
     setForm(emptyForm);
@@ -196,7 +194,7 @@ export default function StaffManagement() {
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Active Staff</p>
           <p className="text-3xl font-bold text-gray-900 mt-3">{activeCount}</p>
@@ -206,11 +204,6 @@ export default function StaffManagement() {
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Synced Records</p>
           <p className="text-3xl font-bold text-sky-700 mt-3">{syncedCount}</p>
           <p className="text-sm text-gray-500 mt-1">Prefer data from MIS or timetable feeds where possible</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Manual Overrides</p>
-          <p className="text-3xl font-bold text-amber-700 mt-3">{manualCount}</p>
-          <p className="text-sm text-gray-500 mt-1">Useful for temporary or non-synced staff</p>
         </div>
       </div>
 

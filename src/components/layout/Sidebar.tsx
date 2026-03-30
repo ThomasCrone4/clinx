@@ -10,7 +10,6 @@ import {
   Building2,
   Database,
   Workflow,
-  ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import type { LucideIcon } from 'lucide-react';
@@ -34,7 +33,6 @@ const liveSchoolAdminItems: NavItem[] = [
   { to: '/dashboard/alerts', icon: AlertTriangle, label: 'Alerts' },
   { to: '/dashboard/staff', icon: UserCog, label: 'Staff' },
   { to: '/dashboard/data-sources', icon: Database, label: 'Your Data' },
-  { to: '/dashboard/trust', icon: ShieldCheck, label: 'Trust & Access' },
   { to: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ];
 
@@ -42,7 +40,6 @@ const teacherItems: NavItem[] = [
   { to: '/teacher', icon: CalendarDays, label: 'My Classes', end: true },
   { to: '/teacher/alerts', icon: AlertTriangle, label: 'My Alerts' },
   { to: '/teacher/help', icon: HelpCircle, label: 'Help' },
-  { to: '/teacher/trust', icon: ShieldCheck, label: 'Trust & Access' },
 ];
 
 export default function Sidebar() {

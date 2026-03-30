@@ -49,7 +49,7 @@ const stepsByRole: Record<UserRole, GuidedTourStep[]> = {
     {
       path: '/dashboard/alerts',
       title: 'Alerts',
-      description: 'This is the quickest way to review flagged pupils, triage concerns, and route action to the right people.',
+      description: 'Use this page to review flagged pupils quickly, mark alerts as seen, and open the relevant pupil context.',
     },
     {
       path: '/dashboard/staff',
@@ -59,39 +59,29 @@ const stepsByRole: Record<UserRole, GuidedTourStep[]> = {
     {
       path: '/dashboard/data-sources',
       title: 'Your Data',
-      description: 'This page explains how Clinx works with your existing systems without adding another data-entry process.',
-    },
-    {
-      path: '/dashboard/trust',
-      title: 'Trust & Access',
-      description: 'This page covers who can see what, how data is used, and how Clinx supports rather than replaces school judgement.',
+      description: 'This page explains what data Clinx uses, who can see what, and how the platform supports school judgement without extra data entry.',
     },
     {
       path: '/dashboard/settings',
       title: 'Settings',
-      description: 'Manage alert routing, escalation rules, and visibility preferences for your school here.',
+      description: 'Manage school-wide alert defaults and leadership visibility here. Teachers still control their own personal alert delivery separately.',
     },
   ],
   teacher: [
     {
       path: '/teacher',
       title: 'My Classes',
-      description: 'Start here to see the pupils and classes most likely to need your attention first.',
+      description: 'Start here to see your timetable for the selected week, the classes most worth watching, and the pupils most likely to need attention.',
     },
     {
       path: '/teacher/alerts',
       title: 'My Alerts',
-      description: 'This page brings together the concerns relevant to you, with low-effort actions like already aware or remind later.',
+      description: 'This page brings together the concerns relevant to you so you can review context, mark them as seen, or remind yourself later.',
     },
     {
       path: '/teacher/help',
       title: 'Help',
-      description: 'Use this page for plain-English guidance on scores, alerts, workflow, and how Clinx fits around normal practice.',
-    },
-    {
-      path: '/teacher/trust',
-      title: 'Trust & Access',
-      description: 'This explains how named pupils are protected, how Clinx uses school data, and where professional judgement still sits.',
+      description: 'Use this page for guidance on scores, alerts, and how Clinx fits around normal practice.',
     },
   ],
 };

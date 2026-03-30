@@ -11,8 +11,6 @@ import BehaviourTab from './BehaviourTab';
 import AcademicTab from './AcademicTab';
 import WellbeingTab from './WellbeingTab';
 import NotesTab from './NotesTab';
-import SuggestedActions from './SuggestedActions';
-import ConcernWorkflowPanel from './ConcernWorkflowPanel';
 import SignalConfidencePanel from './SignalConfidencePanel';
 import PredictedOutcomesPanel from './PredictedOutcomesPanel';
 import { canViewPupilNames, getPupilPrimaryLabel, getPupilSecondaryLabel } from '../../utils/pupilDisplay';
@@ -113,31 +111,22 @@ export default function PupilDetail() {
         <SignalConfidencePanel pupil={pupil} />
       </div>
 
-      <div className="flex gap-6">
-        <div className="flex-1">
-          <div className="flex gap-1 bg-white rounded-xl border border-gray-200 p-1 mb-4">
-            {tabs.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === tab ? 'bg-sky-600 text-white' : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-
-          {tabComponents[activeTab]}
+      <div>
+        <div className="flex gap-1 bg-white rounded-xl border border-gray-200 p-1 mb-4">
+          {tabs.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeTab === tab ? 'bg-sky-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
 
-        {pupil.riskLevel !== 'Low' && (
-          <div className="w-72 shrink-0 space-y-4">
-            <SuggestedActions pupil={pupil} />
-            <ConcernWorkflowPanel pupil={pupil} />
-          </div>
-        )}
+        {tabComponents[activeTab]}
       </div>
     </div>
   );

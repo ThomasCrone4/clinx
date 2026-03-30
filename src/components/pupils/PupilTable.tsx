@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
-import { getAllPupils } from '../../services/dataService';
+import { getAllClasses, getAllPupils } from '../../services/dataService';
 import { useAuth } from '../../context/AuthContext';
 import RiskBadge from '../common/RiskBadge';
 import type { Pupil, RouteBasePath } from '../../types/domain';
@@ -13,44 +13,141 @@ type PupilTableSortKey = 'id' | 'year' | 'form' | 'riskLevel' | 'riskScore' | 'a
 type PupilTableProps = {
   basePath?: RouteBasePath;
   pupils?: Pupil[];
+  title?: string;
+  description?: string | null;
+  hideYearFilter?: boolean;
+  headerContent?: ReactNode;
 };
 
-export default function PupilTable({ basePath = '/dashboard', pupils: pupilsProp }: PupilTableProps) {
+export default function PupilTable({
+  basePath = '/dashboard',
+  pupils: pupilsProp,
+  title = 'All Pupils',
+  description,
+  hideYearFilter = false,
+  headerContent,
+}: PupilTableProps) {
   const allPupils = pupilsProp || getAllPupils();
+  const allClasses = getAllClasses();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [yearFilter, setYearFilter] = useState('all');
+  const [subjectFilter, setSubjectFilter] = useState('all');
+  const [formFilter, setFormFilter] = useState('all');
   const [riskFilter, setRiskFilter] = useState<Pupil['riskLevel'] | 'all'>('all');
   const [sortKey, setSortKey] = useState<PupilTableSortKey>('riskScore');
   const [sortDir, setSortDir] = useState<SortDirection>('desc');
   const [page, setPage] = useState(1);
   const perPage = 50;
 
+  const selectedYear = yearFilter === 'all' ? null : Number.parseInt(yearFilter, 10);
+  const yearClasses = useMemo(
+    () => (selectedYear ? allClasses.filter((schoolClass) => schoolClass.yearGroup === selectedYear) : []),
+    [allClasses, selectedYear],
+  );
+  const subjectOptions = useMemo(
+    () => Array.from(new Set(yearClasses.map((schoolClass) => schoolClass.subject))).sort(),
+    [yearClasses],
+  );
+  const subjectClasses = useMemo(
+    () =>
+      subjectFilter === 'all'
+        ? yearClasses
+        : yearClasses.filter((schoolClass) => schoolClass.subject === subjectFilter),
+    [subjectFilter, yearClasses],
+  );
+  const formOptions = useMemo(
+    () => Array.from(new Set(subjectClasses.map((schoolClass) => schoolClass.form))).sort(),
+    [subjectClasses],
+  );
+  const formClasses = useMemo(
+    () =>
+      formFilter === 'all'
+        ? subjectClasses
+        : subjectClasses.filter((schoolClass) => schoolClass.form === formFilter),
+    [formFilter, subjectClasses],
+  );
+
   const filtered = useMemo(() => {
     let result = [...allPupils];
-    if (search) result = result.filter(p => matchesPupilSearch(p, search, user));
-    if (yearFilter !== 'all') result = result.filter(p => p.year === parseInt(yearFilter));
-    if (riskFilter !== 'all') result = result.filter(p => p.riskLevel === riskFilter);
+
+    if (search) {
+      result = result.filter((pupil) => matchesPupilSearch(pupil, search, user));
+    }
+
+    if (!hideYearFilter && selectedYear) {
+      result = result.filter((pupil) => pupil.year === selectedYear);
+    }
+
+    if (subjectFilter !== 'all') {
+      const matchingClassIds = new Set(subjectClasses.map((schoolClass) => schoolClass.id));
+      result = result.filter((pupil) => pupil.classIds.some((classId) => matchingClassIds.has(classId)));
+    }
+
+    if (formFilter !== 'all') {
+      const matchingClassIds = new Set(formClasses.map((schoolClass) => schoolClass.id));
+      result = result.filter((pupil) => pupil.classIds.some((classId) => matchingClassIds.has(classId)));
+    }
+
+    if (riskFilter !== 'all') {
+      result = result.filter((pupil) => pupil.riskLevel === riskFilter);
+    }
+
     result.sort((a, b) => {
-      const av = a[sortKey], bv = b[sortKey];
-      if (typeof av === 'number' && typeof bv === 'number') return sortDir === 'asc' ? av - bv : bv - av;
+      const av = a[sortKey];
+      const bv = b[sortKey];
+      if (typeof av === 'number' && typeof bv === 'number') {
+        return sortDir === 'asc' ? av - bv : bv - av;
+      }
       return sortDir === 'asc' ? String(av).localeCompare(String(bv)) : String(bv).localeCompare(String(av));
     });
+
     return result;
-  }, [allPupils, search, yearFilter, riskFilter, sortKey, sortDir]);
+  }, [
+    allPupils,
+    formClasses,
+    formFilter,
+    hideYearFilter,
+    riskFilter,
+    search,
+    selectedYear,
+    sortDir,
+    sortKey,
+    subjectClasses,
+    subjectFilter,
+    user,
+  ]);
+
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [filtered.length, page]);
 
   const totalPages = Math.ceil(filtered.length / perPage);
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
   function toggleSort(key: PupilTableSortKey) {
-    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
-    else { setSortKey(key); setSortDir('desc'); }
+    if (sortKey === key) {
+      setSortDir((direction) => (direction === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('desc');
+    }
   }
 
   function SortIcon({ col }: { col: PupilTableSortKey }) {
-    if (sortKey !== col) return <ChevronsUpDown className="w-3.5 h-3.5 text-gray-300" />;
-    return sortDir === 'asc' ? <ChevronUp className="w-3.5 h-3.5 text-sky-600" /> : <ChevronDown className="w-3.5 h-3.5 text-sky-600" />;
+    if (sortKey !== col) {
+      return <ChevronsUpDown className="w-3.5 h-3.5 text-gray-300" />;
+    }
+
+    return sortDir === 'asc' ? (
+      <ChevronUp className="w-3.5 h-3.5 text-sky-600" />
+    ) : (
+      <ChevronDown className="w-3.5 h-3.5 text-sky-600" />
+    );
   }
 
   const columns: Array<{ key: PupilTableSortKey; label: string }> = [
@@ -66,33 +163,55 @@ export default function PupilTable({ basePath = '/dashboard', pupils: pupilsProp
   return (
     <div className="space-y-4 max-w-7xl">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">All Pupils</h1>
-        <p className="text-sm text-gray-500 mt-1">{filtered.length} pupils found</p>
+        <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+        {description !== null && (
+          <p className="text-sm text-gray-500 mt-1">{description ?? `${filtered.length} pupils found`}</p>
+        )}
       </div>
 
-      {/* Filters */}
-      <div className="flex items-center gap-3">
+      {headerContent}
+
+      <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 max-w-xs">
           <Search className="w-4 h-4 absolute left-3 top-2.5 text-gray-400" />
           <input
             type="text"
             placeholder={canViewPupilNames(user?.role) ? 'Search by pupil name or ID...' : 'Search by ID...'}
             value={search}
-            onChange={e => { setSearch(e.target.value); setPage(1); }}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setPage(1);
+            }}
             className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"
           />
         </div>
-        <select
-          value={yearFilter}
-          onChange={e => { setYearFilter(e.target.value); setPage(1); }}
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 outline-none"
-        >
-          <option value="all">All Years</option>
-          {[5,6,7,8].map(y => <option key={y} value={y}>Year {y}</option>)}
-        </select>
+
+        {!hideYearFilter && (
+          <select
+            value={yearFilter}
+            onChange={(event) => {
+              setYearFilter(event.target.value);
+              setSubjectFilter('all');
+              setFormFilter('all');
+              setPage(1);
+            }}
+            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 outline-none"
+          >
+            <option value="all">All Years</option>
+            {[5, 6, 7, 8].map((year) => (
+              <option key={year} value={year}>
+                Year {year}
+              </option>
+            ))}
+          </select>
+        )}
+
         <select
           value={riskFilter}
-          onChange={e => { setRiskFilter(e.target.value as Pupil['riskLevel'] | 'all'); setPage(1); }}
+          onChange={(event) => {
+            setRiskFilter(event.target.value as Pupil['riskLevel'] | 'all');
+            setPage(1);
+          }}
           className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 outline-none"
         >
           <option value="all">All Risk Levels</option>
@@ -102,12 +221,62 @@ export default function PupilTable({ basePath = '/dashboard', pupils: pupilsProp
         </select>
       </div>
 
-      {/* Table */}
+      {!hideYearFilter && selectedYear && (
+        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="min-w-40">
+              <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
+                Refine by Subject
+              </label>
+              <select
+                value={subjectFilter}
+                onChange={(event) => {
+                  setSubjectFilter(event.target.value);
+                  setFormFilter('all');
+                  setPage(1);
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 outline-none"
+              >
+                <option value="all">All Subjects</option>
+                {subjectOptions.map((subject) => (
+                  <option key={subject} value={subject}>
+                    {subject}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {subjectFilter !== 'all' && (
+              <div className="min-w-40">
+                <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">
+                  Then by Form
+                </label>
+                <select
+                  value={formFilter}
+                  onChange={(event) => {
+                    setFormFilter(event.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 outline-none"
+                >
+                  <option value="all">All Forms</option>
+                  {formOptions.map((form) => (
+                    <option key={form} value={form}>
+                      {form}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <table className="w-full">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
-              {columns.map(col => (
+              {columns.map((col) => (
                 <th
                   key={col.key}
                   onClick={() => toggleSort(col.key)}
@@ -121,7 +290,7 @@ export default function PupilTable({ basePath = '/dashboard', pupils: pupilsProp
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {paginated.map(pupil => (
+            {paginated.map((pupil) => (
               <tr
                 key={pupil.id}
                 onClick={() => navigate(`${basePath}/pupils/${pupil.id}`)}
@@ -135,7 +304,9 @@ export default function PupilTable({ basePath = '/dashboard', pupils: pupilsProp
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-600">Year {pupil.year}</td>
                 <td className="px-4 py-3 text-sm text-gray-600">{pupil.form}</td>
-                <td className="px-4 py-3"><RiskBadge level={pupil.riskLevel} /></td>
+                <td className="px-4 py-3">
+                  <RiskBadge level={pupil.riskLevel} />
+                </td>
                 <td className="px-4 py-3 text-sm font-medium text-gray-900">{pupil.riskScore}%</td>
                 <td className="px-4 py-3 text-sm text-gray-600">{pupil.attendance}%</td>
                 <td className="px-4 py-3 text-xs text-gray-400">28 Mar 2026</td>
@@ -145,33 +316,34 @@ export default function PupilTable({ basePath = '/dashboard', pupils: pupilsProp
         </table>
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-500">
-            Showing {(page - 1) * perPage + 1}–{Math.min(page * perPage, filtered.length)} of {filtered.length}
+            Showing {(page - 1) * perPage + 1}-{Math.min(page * perPage, filtered.length)} of {filtered.length}
           </p>
           <div className="flex items-center gap-1">
             <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
+              onClick={() => setPage((value) => Math.max(1, value - 1))}
               disabled={page === 1}
               className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50"
             >
               Previous
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).slice(
-              Math.max(0, page - 3), Math.min(totalPages, page + 2)
-            ).map(p => (
-              <button
-                key={p}
-                onClick={() => setPage(p)}
-                className={`w-8 h-8 text-sm rounded-lg ${p === page ? 'bg-sky-600 text-white' : 'border border-gray-300 hover:bg-gray-50'}`}
-              >
-                {p}
-              </button>
-            ))}
+            {Array.from({ length: totalPages }, (_, index) => index + 1)
+              .slice(Math.max(0, page - 3), Math.min(totalPages, page + 2))
+              .map((value) => (
+                <button
+                  key={value}
+                  onClick={() => setPage(value)}
+                  className={`w-8 h-8 text-sm rounded-lg ${
+                    value === page ? 'bg-sky-600 text-white' : 'border border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {value}
+                </button>
+              ))}
             <button
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
               disabled={page === totalPages}
               className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50"
             >

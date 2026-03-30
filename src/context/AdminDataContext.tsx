@@ -12,6 +12,7 @@ export type OnboardingStatus = 'On Track' | 'Needs Input' | 'Ready';
 export type CsvImportStatus = 'Imported' | 'Pending' | 'Missing';
 export type ProvisionedUserStatus = 'Created' | 'Invite Pending';
 export type SupportAccountStatus = 'Active' | 'Invited' | 'Suspended';
+export type OnboardingTrackingType = 'Update' | 'Blocker' | 'Next Step';
 
 export type SchoolSupportAccount = {
   id: string;
@@ -48,6 +49,15 @@ export type ProvisionedAdminUser = {
   status: ProvisionedUserStatus;
 };
 
+export type OnboardingTrackingEntry = {
+  id: string;
+  createdAt: string;
+  author: string;
+  stage: OnboardingStage;
+  type: OnboardingTrackingType;
+  text: string;
+};
+
 export type AdminSchool = {
   id: string;
   name: string;
@@ -69,7 +79,7 @@ export type AdminSchool = {
     connectors: SchoolConnectorSettings;
     csvImports: CsvImportRecord[];
     adminUsers: ProvisionedAdminUser[];
-    trackingNotes: string;
+    trackingUpdates: OnboardingTrackingEntry[];
   };
   accounts: SchoolSupportAccount[];
 };
@@ -92,7 +102,10 @@ type AdminDataContextValue = {
   addSchool: (payload: NewSchoolPayload) => AdminSchool;
   getSchoolById: (id: string) => AdminSchool | undefined;
   updateOnboardingStage: (schoolId: string, stage: OnboardingStage) => void;
-  updateTrackingNotes: (schoolId: string, notes: string) => void;
+  addTrackingUpdate: (
+    schoolId: string,
+    update: Omit<OnboardingTrackingEntry, 'id' | 'createdAt' | 'author'> & { author?: string },
+  ) => void;
   updateConnectors: (schoolId: string, connectors: SchoolConnectorSettings) => void;
   markCsvImportDone: (schoolId: string, name: string) => void;
   addProvisionedAdminUser: (schoolId: string, user: Omit<ProvisionedAdminUser, 'status'>) => void;
@@ -107,6 +120,66 @@ type AdminDataContextValue = {
 
 const AdminDataContext = createContext<AdminDataContextValue | null>(null);
 const STORAGE_KEY = 'clinx-admin-data-v2';
+
+function createTrackingUpdate(
+  author: string,
+  stage: OnboardingStage,
+  type: OnboardingTrackingType,
+  text: string,
+  createdAt: string,
+): OnboardingTrackingEntry {
+  const id = `${stage}-${type}-${createdAt}-${text}`
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 80);
+
+  return {
+    id,
+    createdAt,
+    author,
+    stage,
+    type,
+    text,
+  };
+}
+
+function normalizeTrackingUpdates(school: AdminSchool): OnboardingTrackingEntry[] {
+  const existingUpdates = (school.onboarding as AdminSchool['onboarding'] & {
+    trackingNotes?: string;
+    trackingUpdates?: OnboardingTrackingEntry[];
+  }).trackingUpdates;
+
+  if (Array.isArray(existingUpdates) && existingUpdates.length > 0) {
+    return existingUpdates
+      .map((entry, index) => ({
+        id: entry.id || `${school.id}-tracking-${index}`,
+        createdAt: entry.createdAt || '2026-03-10T09:00:00.000Z',
+        author: entry.author || school.onboarding.owner,
+        stage: entry.stage || school.onboarding.stage,
+        type: entry.type || 'Update',
+        text: entry.text || '',
+      }))
+      .filter((entry) => entry.text.trim().length > 0);
+  }
+
+  const legacyNote = (school.onboarding as AdminSchool['onboarding'] & { trackingNotes?: string }).trackingNotes?.trim();
+  if (!legacyNote) {
+    return [];
+  }
+
+  return [createTrackingUpdate(school.onboarding.owner, school.onboarding.stage, 'Update', legacyNote, '2026-03-10T09:00:00.000Z')];
+}
+
+function normalizeSchools(nextSchools: AdminSchool[]): AdminSchool[] {
+  return nextSchools.map((school) => ({
+    ...school,
+    onboarding: {
+      ...school.onboarding,
+      trackingUpdates: normalizeTrackingUpdates(school),
+    },
+  }));
+}
 
 function buildDedworthAccounts(): SchoolSupportAccount[] {
   const teachers = getAllTeachers();
@@ -225,8 +298,22 @@ function createInitialSchools(): AdminSchool[] {
           { name: 'Mr Brad Day', email: 'b.day@dedworth.school', role: 'Assistant Headteacher', status: 'Created' },
           { name: 'Mr. P. Hargreaves', email: 'dsl@dedworth.school', role: 'DSL', status: 'Created' },
         ],
-        trackingNotes:
-          'Owner: Clinx Customer Success. Dedworth is live on the hybrid model path with historical training complete and monitoring in place.',
+        trackingUpdates: [
+          createTrackingUpdate(
+            'Clinx Customer Success',
+            'Discovery',
+            'Update',
+            'Kickoff completed with the school leadership and safeguarding team. Hybrid rollout agreed with historical training first.',
+            '2026-02-11T09:30:00.000Z',
+          ),
+          createTrackingUpdate(
+            'Clinx Customer Success',
+            'Go-Live Readiness',
+            'Next Step',
+            'Live connectors and validation are complete. Monitor post-launch outcome quality and plan the next retraining window.',
+            '2026-03-27T14:00:00.000Z',
+          ),
+        ],
       },
       accounts: buildDedworthAccounts(),
     },
@@ -269,8 +356,22 @@ function createInitialSchools(): AdminSchool[] {
           { name: 'J. Reynolds', email: 'j.reynolds@hillview.school', role: 'School Admin', status: 'Created' },
           { name: 'M. Shah', email: 'm.shah@hillview.school', role: 'DSL', status: 'Invite Pending' },
         ],
-        trackingNotes:
-          'Owner: S. Patel. Hillview is moving through connector setup and only needs the CPOMS export route confirmed.',
+        trackingUpdates: [
+          createTrackingUpdate(
+            'S. Patel',
+            'Discovery',
+            'Update',
+            'Discovery completed and named school contacts confirmed. Clinx is coordinating Arbor and Class Charts access directly with the school team.',
+            '2026-03-13T11:00:00.000Z',
+          ),
+          createTrackingUpdate(
+            'S. Patel',
+            'Integration Setup',
+            'Next Step',
+            'Awaiting confirmation of the CPOMS export route so the historical safeguarding context can be mapped.',
+            '2026-03-28T15:15:00.000Z',
+          ),
+        ],
       },
       accounts: buildPlaceholderAccounts('Hillview', 'school-hillview'),
     },
@@ -312,8 +413,22 @@ function createInitialSchools(): AdminSchool[] {
         adminUsers: [
           { name: 'A. Turner', email: 'a.turner@riverside.school', role: 'School Admin', status: 'Created' },
         ],
-        trackingNotes:
-          'Owner: A. Turner. Riverside is blocked on outcome-history exports before the first training run can be validated.',
+        trackingUpdates: [
+          createTrackingUpdate(
+            'A. Turner',
+            'Integration Setup',
+            'Update',
+            'Connector scope agreed for Arbor and CPOMS, with Class Charts behaviour export still under discussion.',
+            '2026-03-05T10:45:00.000Z',
+          ),
+          createTrackingUpdate(
+            'A. Turner',
+            'Historical Training',
+            'Blocker',
+            'Outcome-history exports are still missing, so the first training run cannot be validated yet.',
+            '2026-03-26T16:20:00.000Z',
+          ),
+        ],
       },
       accounts: buildPlaceholderAccounts('Riverside', 'school-riverside'),
     },
@@ -356,8 +471,22 @@ function createInitialSchools(): AdminSchool[] {
           { name: 'L. Morris', email: 'l.morris@oakfield.school', role: 'School Admin', status: 'Created' },
           { name: 'P. Lewis', email: 'p.lewis@oakfield.school', role: 'DSL', status: 'Created' },
         ],
-        trackingNotes:
-          'Owner: L. Morris. Oakfield is ready for a controlled pilot launch once the final go-live sign-off is logged.',
+        trackingUpdates: [
+          createTrackingUpdate(
+            'L. Morris',
+            'Historical Training',
+            'Update',
+            'Historical CSV training completed and the validation workshop closed with positive school feedback.',
+            '2026-03-08T09:15:00.000Z',
+          ),
+          createTrackingUpdate(
+            'L. Morris',
+            'Go-Live Readiness',
+            'Next Step',
+            'Pilot launch is ready to proceed once the final school sign-off is logged.',
+            '2026-03-25T13:10:00.000Z',
+          ),
+        ],
       },
       accounts: buildPlaceholderAccounts('Oakfield', 'school-oakfield'),
     },
@@ -375,7 +504,7 @@ function loadInitialSchools(): AdminSchool[] {
   }
 
   try {
-    return JSON.parse(stored) as AdminSchool[];
+    return normalizeSchools(JSON.parse(stored) as AdminSchool[]);
   } catch {
     return createInitialSchools();
   }
@@ -417,11 +546,19 @@ function updateSchoolRecord(
 export function AdminDataProvider({ children }: { children: ReactNode }) {
   const [schools, setSchools] = useState<AdminSchool[]>(loadInitialSchools);
 
-  function persist(nextSchools: AdminSchool[]) {
-    setSchools(nextSchools);
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextSchools));
-    }
+  function persist(nextSchools: AdminSchool[] | ((prevSchools: AdminSchool[]) => AdminSchool[])) {
+    setSchools((prevSchools) => {
+      const resolvedSchools =
+        typeof nextSchools === 'function'
+          ? (nextSchools as (prevSchools: AdminSchool[]) => AdminSchool[])(prevSchools)
+          : nextSchools;
+
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(resolvedSchools));
+      }
+
+      return resolvedSchools;
+    });
   }
 
   function addSchool(payload: NewSchoolPayload): AdminSchool {
@@ -496,7 +633,15 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
             status: 'Invite Pending',
           },
         ],
-        trackingNotes: `Owner: ${trimmedAdminName}. New onboarding created for ${trimmedName}. Next step: confirm integration route and school-side contacts.`,
+        trackingUpdates: [
+          createTrackingUpdate(
+            trimmedAdminName,
+            stage,
+            'Update',
+            `New onboarding created for ${trimmedName}. Next step: confirm integration route and school-side contacts.`,
+            new Date().toISOString(),
+          ),
+        ],
       },
       accounts: [
         {
@@ -522,8 +667,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   }
 
   function updateOnboardingStage(schoolId: string, stage: OnboardingStage) {
-    persist(
-      updateSchoolRecord(schools, schoolId, (school) => {
+    persist((prevSchools) =>
+      updateSchoolRecord(prevSchools, schoolId, (school) => {
         const nextStatus = inferOnboardingStatus(stage, school.onboarding.connectors, school.onboarding.csvImports);
         return {
           ...school,
@@ -538,13 +683,30 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     );
   }
 
-  function updateTrackingNotes(schoolId: string, notes: string) {
-    persist(
-      updateSchoolRecord(schools, schoolId, (school) => ({
+  function addTrackingUpdate(
+    schoolId: string,
+    update: Omit<OnboardingTrackingEntry, 'id' | 'createdAt' | 'author'> & { author?: string },
+  ) {
+    const trimmedText = update.text.trim();
+    if (!trimmedText) {
+      return;
+    }
+
+    persist((prevSchools) =>
+      updateSchoolRecord(prevSchools, schoolId, (school) => ({
         ...school,
         onboarding: {
           ...school.onboarding,
-          trackingNotes: notes,
+          trackingUpdates: [
+            createTrackingUpdate(
+              update.author || school.onboarding.owner,
+              update.stage,
+              update.type,
+              trimmedText,
+              new Date().toISOString(),
+            ),
+            ...school.onboarding.trackingUpdates,
+          ],
         },
       })),
     );
@@ -659,7 +821,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
       addSchool,
       getSchoolById,
       updateOnboardingStage,
-      updateTrackingNotes,
+      addTrackingUpdate,
       updateConnectors,
       markCsvImportDone,
       addProvisionedAdminUser,

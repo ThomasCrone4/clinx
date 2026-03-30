@@ -50,9 +50,7 @@ export default function AlertCard({
             <span className="flex items-center gap-1 text-xs text-gray-400">
               <Clock className="w-3 h-3" /> {timeAgo(alert.timestamp)}
             </span>
-            {isAcknowledged && (
-              <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Acknowledged</span>
-            )}
+            {isAcknowledged && <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Seen</span>}
             {user?.role === 'teacher' && reminderLabel && (
               <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Reminder set for {reminderLabel}</span>
             )}
@@ -76,7 +74,7 @@ export default function AlertCard({
               onClick={() => onAcknowledge(alert.id)}
               className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
             >
-              <Check className="w-3.5 h-3.5" /> {user?.role === 'teacher' ? 'Already Aware' : 'Acknowledge'}
+              <Check className="w-3.5 h-3.5" /> Mark as Seen
             </button>
           )}
           {user?.role === 'teacher' && alert.status !== 'Dismissed' && onRemindLater && (

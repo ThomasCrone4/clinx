@@ -181,16 +181,16 @@ export default function CalendarView() {
   })}`;
   const liveWeekMessage =
     weekOffset > 0
-      ? 'No attendance yet - this week has not happened yet.'
-      : weekOffset < 0
-        ? 'Showing a previous week. Attendance and timetable context are historical.'
+      ? 'Showing a future week'
+        : weekOffset < 0
+        ? 'Showing a previous week'
         : currentSchoolDay && currentPeriodId
           ? `Live now: ${currentSchoolDay}, ${now.toLocaleDateString('en-GB', {
               day: 'numeric',
               month: 'short',
             })}, Period ${currentPeriodId}.`
           : currentSchoolDay
-            ? `Today is ${currentSchoolDay}. You are outside scheduled lesson time right now.`
+            ? 'Showing the current week'
             : 'This is the current week, but today is outside the Monday to Friday timetable.';
 
   useEffect(() => {
@@ -289,7 +289,7 @@ export default function CalendarView() {
       </div>
 
       <div className="grid grid-cols-[1.7fr_1fr] gap-6 items-start">
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           <div className="bg-gradient-to-r from-sky-700 via-sky-600 to-cyan-600 rounded-2xl p-6 text-white">
             <div className="flex items-start justify-between gap-6">
               <div>
@@ -310,7 +310,7 @@ export default function CalendarView() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden min-w-0">
             <div className="px-5 py-4 border-b border-gray-100 flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">Weekly Timetable</h2>
@@ -329,7 +329,7 @@ export default function CalendarView() {
               </div>
             </div>
 
-            <table className="w-full">
+            <table className="w-full table-fixed">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="w-24 px-4 py-3 text-xs font-semibold text-gray-500 uppercase text-left">Time</th>
@@ -394,22 +394,25 @@ export default function CalendarView() {
                               }`}
                             >
                               <div className="min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <p className="text-sm font-semibold text-sky-900 truncate">{slot.className}</p>
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <p className="text-sm font-semibold text-sky-900 truncate flex-1 min-w-0">
+                                    {slot.className}
+                                  </p>
                                   {isCurrentSlot && (
-                                    <span className="text-[10px] leading-none bg-sky-600 text-white px-1.5 py-1 rounded-full font-semibold">
+                                    <span className="text-[10px] leading-none bg-sky-600 text-white px-1.5 py-1 rounded-full font-semibold shrink-0">
                                       Now
+                                    </span>
+                                  )}
+                                  {weekOffset > 0 && (
+                                    <span className="text-[10px] leading-none bg-slate-100 text-slate-700 px-1.5 py-1 rounded-full font-semibold shrink-0">
+                                      Upcoming
                                     </span>
                                   )}
                                 </div>
                                 <p className="text-xs text-sky-700 truncate">{slot.subject} - {slot.room}</p>
                               </div>
                               <div className="min-w-0">
-                                {weekOffset > 0 ? (
-                                  <span className="text-[11px] leading-none bg-slate-100 text-slate-700 px-1.5 py-1 rounded-full font-medium inline-flex">
-                                    Upcoming
-                                  </span>
-                                ) : risks.high > 0 || risks.medium > 0 ? (
+                                {risks.high > 0 || risks.medium > 0 ? (
                                   <div className="flex items-center gap-1.5 flex-wrap">
                                     {risks.high > 0 && (
                                       <span className="text-[11px] leading-none bg-red-100 text-red-700 px-1.5 py-1 rounded-full font-medium">
@@ -469,7 +472,7 @@ export default function CalendarView() {
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           <div ref={alertPreferencesRef} id="alert-preferences" className="bg-white rounded-2xl border border-gray-200 p-5">
             <div className="flex items-center justify-between mb-4">
               <div>

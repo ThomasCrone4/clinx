@@ -434,32 +434,50 @@ function generateBehaviourHistory(incidents, archetype, pupilId): BehaviourIncid
     'Walking out of classroom',
     'Throwing objects in class',
   ];
+  const recurringConcernMonths = [
+    '2025-11-01',
+    '2025-12-01',
+    '2026-01-01',
+    '2026-01-01',
+    '2026-02-01',
+    '2026-02-01',
+    '2026-02-01',
+  ];
+
+  function addIncident(date: Date, severityOptions: BehaviourSeverity[]) {
+    history.push({
+      date: date.toISOString().split('T')[0],
+      type: pick(types),
+      severity: pick(severityOptions),
+      description: pick(descriptions),
+      loggedBy: `Staff Member`,
+    });
+  }
 
   if (archetype?.behavHistory) {
     archetype.behavHistory.forEach((count, month) => {
       for (let i = 0; i < count; i++) {
         const date = new Date('2025-10-01');
         date.setDate(date.getDate() + month * 28 + randInt(0, 27));
-        history.push({
-          date: date.toISOString().split('T')[0],
-          type: pick(types),
-          severity: count > 4 ? pick<BehaviourSeverity>(['Moderate', 'Major']) : pick(severities),
-          description: pick(descriptions),
-          loggedBy: `Staff Member`,
-        });
+        addIncident(date, count > 4 ? ['Moderate', 'Major'] : severities);
       }
     });
   } else {
+    const hasRecurringBehaviourPattern = incidents >= 2;
+    const maxHistoricalIncidents =
+      incidents >= 6 ? 4 : incidents >= 4 ? 3 : incidents >= 2 ? 2 : 0;
+    const historicalIncidentCount = hasRecurringBehaviourPattern ? randInt(1, maxHistoricalIncidents) : 0;
+
+    for (let i = 0; i < historicalIncidentCount; i++) {
+      const monthStart = new Date(pick(recurringConcernMonths));
+      monthStart.setDate(monthStart.getDate() + randInt(0, 27));
+      addIncident(monthStart, incidents >= 5 ? ['Minor', 'Moderate', 'Moderate'] : ['Minor', 'Minor', 'Moderate']);
+    }
+
     for (let i = 0; i < incidents; i++) {
       const date = new Date('2026-03-01');
       date.setDate(date.getDate() + randInt(0, 27));
-      history.push({
-        date: date.toISOString().split('T')[0],
-        type: pick(types),
-        severity: pick(severities),
-        description: pick(descriptions),
-        loggedBy: `Staff Member`,
-      });
+      addIncident(date, severities);
     }
   }
 

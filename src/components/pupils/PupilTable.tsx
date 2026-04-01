@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { getAllClasses, getAllPupils } from '../../services/dataService';
 import { useAuth } from '../../context/AuthContext';
@@ -30,16 +30,25 @@ export default function PupilTable({
   const allPupils = pupilsProp || getAllPupils();
   const allClasses = getAllClasses();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const riskParam = searchParams.get('risk');
+  const initialRiskFilter: Pupil['riskLevel'] | 'all' =
+    riskParam === 'High' || riskParam === 'Medium' || riskParam === 'Low' ? riskParam : 'all';
   const [search, setSearch] = useState('');
   const [yearFilter, setYearFilter] = useState('all');
   const [subjectFilter, setSubjectFilter] = useState('all');
   const [formFilter, setFormFilter] = useState('all');
-  const [riskFilter, setRiskFilter] = useState<Pupil['riskLevel'] | 'all'>('all');
+  const [riskFilter, setRiskFilter] = useState<Pupil['riskLevel'] | 'all'>(initialRiskFilter);
   const [sortKey, setSortKey] = useState<PupilTableSortKey>('riskScore');
   const [sortDir, setSortDir] = useState<SortDirection>('desc');
   const [page, setPage] = useState(1);
   const perPage = 50;
+
+  useEffect(() => {
+    setRiskFilter(initialRiskFilter);
+    setPage(1);
+  }, [initialRiskFilter]);
 
   const selectedYear = yearFilter === 'all' ? null : Number.parseInt(yearFilter, 10);
   const yearClasses = useMemo(

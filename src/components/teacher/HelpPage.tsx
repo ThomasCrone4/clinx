@@ -8,7 +8,7 @@ export default function HelpPage() {
     },
     {
       q: 'How are insights generated?',
-      a: 'Clinx combines attendance, behaviour, academic, wellbeing, and contextual signals from systems your school already uses. It looks for patterns that have previously been followed by later concerns or additional support needs, without asking teachers to enter extra data.',
+      a: 'Clinx combines pupil profile, school engagement, academic, behavioural, wellbeing and contextual signals from systems your school already uses.',
     },
     {
       q: 'What should I do when a pupil is flagged?',

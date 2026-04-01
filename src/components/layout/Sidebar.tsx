@@ -38,6 +38,7 @@ const liveSchoolAdminItems: NavItem[] = [
 
 const teacherItems: NavItem[] = [
   { to: '/teacher', icon: CalendarDays, label: 'My Classes', end: true },
+  { to: '/teacher/pupils', icon: Users, label: 'My Pupils' },
   { to: '/teacher/alerts', icon: AlertTriangle, label: 'My Alerts' },
   { to: '/teacher/help', icon: HelpCircle, label: 'Help' },
 ];

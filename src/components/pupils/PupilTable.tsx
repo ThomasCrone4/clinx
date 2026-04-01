@@ -17,6 +17,11 @@ type PupilTableProps = {
   description?: string | null;
   hideYearFilter?: boolean;
   headerContent?: ReactNode;
+  classFilterOptions?: Array<{
+    id: string;
+    name: string;
+  }>;
+  classFilterLabel?: string;
 };
 
 export default function PupilTable({
@@ -26,6 +31,8 @@ export default function PupilTable({
   description,
   hideYearFilter = false,
   headerContent,
+  classFilterOptions,
+  classFilterLabel = 'All Classes',
 }: PupilTableProps) {
   const allPupils = pupilsProp || getAllPupils();
   const allClasses = getAllClasses();
@@ -33,13 +40,20 @@ export default function PupilTable({
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const riskParam = searchParams.get('risk');
+  const yearParam = searchParams.get('year');
+  const classParam = searchParams.get('class');
   const initialRiskFilter: Pupil['riskLevel'] | 'all' =
     riskParam === 'High' || riskParam === 'Medium' || riskParam === 'Low' ? riskParam : 'all';
+  const initialYearFilter =
+    yearParam && ['5', '6', '7', '8'].includes(yearParam) ? yearParam : 'all';
+  const initialClassFilter =
+    classParam && classFilterOptions?.some((schoolClass) => schoolClass.id === classParam) ? classParam : 'all';
   const [search, setSearch] = useState('');
-  const [yearFilter, setYearFilter] = useState('all');
+  const [yearFilter, setYearFilter] = useState(initialYearFilter);
   const [subjectFilter, setSubjectFilter] = useState('all');
   const [formFilter, setFormFilter] = useState('all');
   const [riskFilter, setRiskFilter] = useState<Pupil['riskLevel'] | 'all'>(initialRiskFilter);
+  const [classFilter, setClassFilter] = useState(initialClassFilter);
   const [sortKey, setSortKey] = useState<PupilTableSortKey>('riskScore');
   const [sortDir, setSortDir] = useState<SortDirection>('desc');
   const [page, setPage] = useState(1);
@@ -47,8 +61,10 @@ export default function PupilTable({
 
   useEffect(() => {
     setRiskFilter(initialRiskFilter);
+    setYearFilter(initialYearFilter);
+    setClassFilter(initialClassFilter);
     setPage(1);
-  }, [initialRiskFilter]);
+  }, [initialClassFilter, initialRiskFilter, initialYearFilter]);
 
   const selectedYear = yearFilter === 'all' ? null : Number.parseInt(yearFilter, 10);
   const yearClasses = useMemo(
@@ -99,6 +115,10 @@ export default function PupilTable({
       result = result.filter((pupil) => pupil.classIds.some((classId) => matchingClassIds.has(classId)));
     }
 
+    if (classFilter !== 'all') {
+      result = result.filter((pupil) => pupil.classIds.includes(classFilter));
+    }
+
     if (riskFilter !== 'all') {
       result = result.filter((pupil) => pupil.riskLevel === riskFilter);
     }
@@ -115,6 +135,7 @@ export default function PupilTable({
     return result;
   }, [
     allPupils,
+    classFilter,
     formClasses,
     formFilter,
     hideYearFilter,
@@ -210,6 +231,24 @@ export default function PupilTable({
             {[5, 6, 7, 8].map((year) => (
               <option key={year} value={year}>
                 Year {year}
+              </option>
+            ))}
+          </select>
+        )}
+
+        {classFilterOptions && classFilterOptions.length > 0 && (
+          <select
+            value={classFilter}
+            onChange={(event) => {
+              setClassFilter(event.target.value);
+              setPage(1);
+            }}
+            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-sky-500 outline-none"
+          >
+            <option value="all">{classFilterLabel}</option>
+            {classFilterOptions.map((schoolClass) => (
+              <option key={schoolClass.id} value={schoolClass.id}>
+                {schoolClass.name}
               </option>
             ))}
           </select>

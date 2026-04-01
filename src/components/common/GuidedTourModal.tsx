@@ -74,6 +74,11 @@ const stepsByRole: Record<UserRole, GuidedTourStep[]> = {
       description: 'Start here to see your timetable for the selected week, the classes most worth watching, and the pupils most likely to need attention.',
     },
     {
+      path: '/teacher/pupils',
+      title: 'My Pupils',
+      description: 'Use this page to review all pupils you teach in one place, then filter by year, risk, or class when you need a narrower view.',
+    },
+    {
       path: '/teacher/alerts',
       title: 'My Alerts',
       description: 'This page brings together the concerns relevant to you so you can review context, mark them as seen, or remind yourself later.',

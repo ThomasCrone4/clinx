@@ -21,6 +21,7 @@ import SchoolSupportPage from './components/admin/SchoolSupportPage';
 import CalendarView from './components/teacher/CalendarView';
 import ClassDetail from './components/teacher/ClassDetail';
 import HelpPage from './components/teacher/HelpPage';
+import MyPupilsPage from './components/teacher/MyPupilsPage';
 import TrustPage from './components/shared/TrustPage';
 import type { ReactNode } from 'react';
 import type { UserRole } from './types/domain';
@@ -75,6 +76,7 @@ function AppRoutes() {
       {/* Teacher routes */}
       <Route element={<ProtectedRoute roles={['teacher']}><Layout /></ProtectedRoute>}>
         <Route path="/teacher" element={<CalendarView />} />
+        <Route path="/teacher/pupils" element={<MyPupilsPage />} />
         <Route path="/teacher/class/:id" element={<ClassDetail />} />
         <Route path="/teacher/pupils/:id" element={<PupilDetail />} />
         <Route path="/teacher/alerts" element={<AlertList basePath="/teacher" />} />

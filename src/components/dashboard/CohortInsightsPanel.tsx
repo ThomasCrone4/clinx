@@ -58,7 +58,11 @@ export default function CohortInsightsPanel() {
         </div>
         <div className="space-y-3">
           {yearInsights.map((item) => (
-            <div key={item.year} className="rounded-lg border border-gray-200 p-4">
+            <button
+              key={item.year}
+              onClick={() => navigate(`/dashboard/pupils?year=${item.year}`)}
+              className="w-full text-left rounded-lg border border-gray-200 p-4 hover:bg-slate-50 transition-colors"
+            >
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium text-gray-900">Year {item.year}</p>
@@ -72,7 +76,7 @@ export default function CohortInsightsPanel() {
                 <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">High {item.high}</span>
                 <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">Medium {item.medium}</span>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </div>

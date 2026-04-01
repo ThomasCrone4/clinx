@@ -251,6 +251,7 @@ export default function CalendarView() {
             icon: BookOpen,
             tone: 'text-sky-700',
             bg: 'bg-sky-50 border-sky-200',
+            to: '/teacher/pupils',
           },
           {
             label: 'High Risk Pupils',
@@ -259,6 +260,7 @@ export default function CalendarView() {
             icon: AlertTriangle,
             tone: 'text-red-700',
             bg: 'bg-red-50 border-red-200',
+            to: '/teacher/pupils?risk=High',
           },
           {
             label: 'Medium Risk Pupils',
@@ -267,6 +269,7 @@ export default function CalendarView() {
             icon: Brain,
             tone: 'text-amber-700',
             bg: 'bg-amber-50 border-amber-200',
+            to: '/teacher/pupils?risk=Medium',
           },
           {
             label: 'Week Attendance',
@@ -277,14 +280,21 @@ export default function CalendarView() {
             bg: attendanceSnapshot.bg,
           },
         ].map((item) => (
-          <div key={item.label} className={`rounded-2xl border p-4 ${item.bg}`}>
+          <button
+            key={item.label}
+            onClick={item.to ? () => navigate(item.to) : undefined}
+            disabled={!item.to}
+            className={`rounded-2xl border p-4 text-left ${item.bg} ${
+              item.to ? 'transition-colors hover:brightness-[0.98] cursor-pointer' : 'cursor-default'
+            }`}
+          >
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{item.label}</p>
               <item.icon className={`w-4 h-4 ${item.tone}`} />
             </div>
             <p className={`text-3xl font-bold mt-3 ${item.tone}`}>{item.value}</p>
             <p className="text-xs text-gray-500 mt-2">{item.detail}</p>
-          </div>
+          </button>
         ))}
       </div>
 

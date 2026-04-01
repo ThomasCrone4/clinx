@@ -17,6 +17,7 @@ type PupilTableProps = {
   description?: string | null;
   hideYearFilter?: boolean;
   headerContent?: ReactNode;
+  scopeNotice?: string;
   classFilterOptions?: Array<{
     id: string;
     name: string;
@@ -31,6 +32,7 @@ export default function PupilTable({
   description,
   hideYearFilter = false,
   headerContent,
+  scopeNotice,
   classFilterOptions,
   classFilterLabel = 'All Classes',
 }: PupilTableProps) {
@@ -200,6 +202,12 @@ export default function PupilTable({
       </div>
 
       {headerContent}
+
+      {scopeNotice && (
+        <div className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3">
+          <p className="text-sm text-sky-800">{scopeNotice}</p>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 max-w-xs">
